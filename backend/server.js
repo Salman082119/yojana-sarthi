@@ -7,6 +7,8 @@ const path = require("path");
 const authRoutes = require("./routes/auth");
 const schemesRoutes = require("./routes/schemes");
 const checkRoutes = require("./routes/check");
+const applicationsRoutes = require("./routes/applications");
+const adminRoutes = require("./routes/admin");
 const seed = require("./seed");
 
 const app = express();
@@ -23,6 +25,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/schemes", schemesRoutes);
 app.use("/api/check", checkRoutes);
+app.use("/api/applications", applicationsRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Serve the frontend (static files) - the whole site is one deployable service
 app.use(express.static(path.join(__dirname, "public")));

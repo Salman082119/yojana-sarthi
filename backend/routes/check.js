@@ -27,7 +27,44 @@ const MISSED_LABELS = {
   categoriesOrFemale: "categoriesOrFemale",
   bplOrCategories: "bplOrCategories",
   ageOrWidowOrDisability: "ageOrWidowOrDisability",
+  minEducation: "minEducation",
+  maxEducation: "maxEducation",
+  minLandSize: "minLandSize",
+  maxLandSize: "maxLandSize",
+  minFamilySize: "minFamilySize",
+  maxFamilySize: "maxFamilySize",
 };
+
+const EDUCATION_LEVELS = { none: 0, school: 1, hs: 2, graduate: 3, postgraduate: 4 };
+const educIndex = (e) => (e && EDUCATION_LEVELS[e] !== undefined ? EDUCATION_LEVELS[e] : 0);
+
+// Number of restriction keys a scheme actually checks (used for relevance %).
+function countCriteria(criteria) {
+  let n = 0;
+  if (criteria.minAge !== undefined) n++;
+  if (criteria.maxAge !== undefined) n++;
+  if (criteria.genders) n++;
+  if (criteria.states) n++;
+  if (criteria.maxIncome !== undefined) n++;
+  if (criteria.categories) n++;
+  if (criteria.occupations) n++;
+  if (criteria.residences) n++;
+  if (criteria.requiresLandOwner) n++;
+  if (criteria.requiresBPL) n++;
+  if (criteria.requiresDisability) n++;
+  if (criteria.requiresWidow) n++;
+  if (criteria.requiresNoPucca) n++;
+  if (criteria.categoriesOrFemale) n++;
+  if (criteria.bplOrCategories) n++;
+  if (criteria.ageOrWidowOrDisability !== undefined) n++;
+  if (criteria.minEducation !== undefined) n++;
+  if (criteria.maxEducation !== undefined) n++;
+  if (criteria.minLandSize !== undefined) n++;
+  if (criteria.maxLandSize !== undefined) n++;
+  if (criteria.minFamilySize !== undefined) n++;
+  if (criteria.maxFamilySize !== undefined) n++;
+  return n;
+}
 
 // Evaluates a scheme's "criteria" object against the submitted answers.
 // Returns an array of missed conditions (empty array = fully eligible).
@@ -58,6 +95,21 @@ function evaluateCriteria(criteria, u) {
 
   if (criteria.residences && !criteria.residences.includes(u.residence))
     missed.push({ code: "residences", label: MISSED_LABELS.residences, value: criteria.residences });
+
+  if (criteria.minEducation !== undefined && educIndex(u.education) < educIndex(criteria.minEducation))
+    missed.push({ code: "minEducation", label: MISSED_LABELS.minEducation, value: criteria.minEducation });
+  if (criteria.maxEducation !== undefined && educIndex(u.education) > educIndex(criteria.maxEducation))
+    missed.push({ code: "maxEducation", label: MISSED_LABELS.maxEducation, value: criteria.maxEducation });
+
+  if (criteria.minLandSize !== undefined && (u.landSizeAcres === null || u.landSizeAcres < criteria.minLandSize))
+    missed.push({ code: "minLandSize", label: MISSED_LABELS.minLandSize, value: criteria.minLandSize });
+  if (criteria.maxLandSize !== undefined && (u.landSizeAcres === null || u.landSizeAcres > criteria.maxLandSize))
+    missed.push({ code: "maxLandSize", label: MISSED_LABELS.maxLandSize, value: criteria.maxLandSize });
+
+  if (criteria.minFamilySize !== undefined && (u.familySize === null || u.familySize < criteria.minFamilySize))
+    missed.push({ code: "minFamilySize", label: MISSED_LABELS.minFamilySize, value: criteria.minFamilySize });
+  if (criteria.maxFamilySize !== undefined && (u.familySize === null || u.familySize > criteria.maxFamilySize))
+    missed.push({ code: "maxFamilySize", label: MISSED_LABELS.maxFamilySize, value: criteria.maxFamilySize });
 
   if (criteria.requiresLandOwner && !u.landOwner) missed.push({ code: "landOwner", label: MISSED_LABELS.landOwner });
   if (criteria.requiresBPL && !u.bpl) missed.push({ code: "bpl", label: MISSED_LABELS.bpl });
@@ -108,6 +160,9 @@ router.post("/", optionalAuth, async (req, res) => {
   if (age !== null && (isNaN(Number(age)) || Number(age) < 0 || Number(age) > 120)) age = null;
   if (income !== null && (isNaN(Number(income)) || Number(income) < 0 || Number(income) > 1000000000)) income = null;
 
+  const cleanNum = (v) =>
+    v === "" || v === undefined || v === null || isNaN(Number(v)) ? null : Number(v);
+
   const u = {
     age: age === null ? null : Number(age),
     gender: req.body.gender ?? null,
@@ -116,6 +171,9 @@ router.post("/", optionalAuth, async (req, res) => {
     category: req.body.category ?? null,
     occupation: req.body.occupation ?? null,
     residence: req.body.residence ?? null,
+    education: req.body.education ?? null,
+    landSizeAcres: cleanNum(req.body.landSizeAcres),
+    familySize: cleanNum(req.body.familySize),
     landOwner: !!req.body.landOwner,
     bpl: !!req.body.bpl,
     disability: !!req.body.disability,
@@ -125,15 +183,25 @@ router.post("/", optionalAuth, async (req, res) => {
 
   try {
     const result = await pool.query("SELECT * FROM schemes");
-    const evaluated = result.rows.map((s) => ({
-      ...s,
-      ...isEligibleSpecial(s.id, s.criteria, u),
-    }));
+    const evaluated = result.rows.map((s) => {
+      const outcome = isEligibleSpecial(s.id, s.criteria, u);
+      const total = countCriteria(s.criteria);
+      const score =
+        total === 0
+          ? 100
+          : Math.max(0, Math.round((100 * (total - outcome.missed.length)) / total));
+      return { ...s, ...outcome, score };
+    });
 
-    const matches = evaluated.filter((s) => s.eligible).map(({ eligible, missed, ...rest }) => rest);
+    const matches = evaluated
+      .filter((s) => s.eligible)
+      .map(({ eligible, missed, ...rest }) => rest)
+      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+
     const nearMatches = evaluated
       .filter((s) => !s.eligible && s.missed.length > 0 && s.missed.length <= 2)
-      .map(({ eligible, ...rest }) => rest);
+      .map(({ eligible, ...rest }) => rest)
+      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
 
     // Save to history if the user is logged in
     if (req.userId) {

@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1A2B4C">
+<meta name="description" content="योजना सारथी — check your eligibility for Indian government schemes. पात्र योजनाएं पहचानें।">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
 <title>योजना सारथी — Government Scheme Eligibility Register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -86,6 +91,8 @@
   .modal button.primary{width:100%; padding:11px; background:var(--seal-red); color:#fff; border:none; border-radius:3px; font-weight:600; cursor:pointer;}
   .modal .switch{text-align:center; margin-top:12px; font-size:13px; color:var(--muted); cursor:pointer;}
   .modal .close{position:absolute; top:10px; right:14px; cursor:pointer; font-size:18px; color:var(--muted);}
+  .modal .forgot-link{text-align:right; font-size:12.5px; color:var(--seal-red); cursor:pointer; margin:-4px 0 10px;}
+  .modal .forgot-link:hover{text-decoration:underline;}
 
   /* Top action buttons */
   .header-actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
@@ -132,6 +139,45 @@
   .hist-rerun{background:var(--navy); color:#EFE7D4; border:none; border-radius:16px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:600;}
   .hist-rerun:hover{background:var(--navy-2);}
 
+  /* v3 additions: match chips, track buttons, docs/steps, applications & admin */
+  .match-chip{background:#2F6844; color:#fff; border-radius:12px; padding:3px 9px; font-weight:700; font-size:11px; font-family:'IBM Plex Mono',monospace;}
+  .card-actions{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:10px;}
+  .track-btn{background:var(--navy); color:#EFE7D4; border:none; border-radius:16px; padding:6px 14px; font-size:12px; cursor:pointer; font-weight:600;}
+  .track-btn:hover{background:var(--navy-2);}
+  .track-btn.tracked{background:var(--seal-green);}
+  .scheme-dets{margin-top:10px; border-top:1px dashed var(--paper-line); padding-top:8px;}
+  .scheme-dets summary{cursor:pointer; font-size:12.5px; font-weight:600; color:var(--navy); padding:3px 0;}
+  .scheme-dets .dets-list{margin:6px 0 2px; padding-left:20px; font-size:12.5px; color:#4a463d; line-height:1.6;}
+
+  .app-status{font-size:11px; font-weight:700; padding:3px 9px; border-radius:12px; text-transform:uppercase;}
+  .app-status.saved{background:#e8e4d6; color:#6b6555;}
+  .app-status.applied{background:#dbe6df; color:#2F6844;}
+  .app-status.documents_pending{background:#efe3cf; color:#c46a21;}
+  .app-status.approved{background:#d6e6f0; color:#1a4c6b;}
+  .app-status.rejected{background:#f0d6d6; color:#a32638;}
+  .app-filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .app-filters select, .app-filters .btn{width:auto; margin:0;}
+  .btn{background:var(--navy); color:#EFE7D4; border:none; border-radius:16px; padding:7px 14px; font-size:12.5px; cursor:pointer; font-weight:600;}
+  .btn:hover{background:var(--navy-2);}
+  .btn.ghost{background:transparent; border:1px solid var(--navy); color:var(--navy);}
+  .btn.danger{background:#a32638; color:#fff;}
+  .app-card{background:var(--card); border:1px solid var(--paper-line); border-radius:5px; padding:14px 16px; margin-bottom:12px;}
+  .app-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;}
+  .app-actions select{padding:6px 8px; border:1px solid #a89f83; border-radius:3px; font-size:12.5px; background:#fff;}
+  .app-notes{font-size:12.5px; color:var(--muted); font-style:italic; margin:6px 0 0;}
+
+  .admin-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:18px;}
+  .stat-card{background:var(--card); border:1px solid var(--paper-line); border-radius:5px; padding:14px 16px; text-align:center;}
+  .stat-card .num{font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; color:var(--navy);}
+  .stat-card .lbl{font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .admin-section{margin-bottom:18px;}
+  .admin-section h4{margin:0 0 8px; color:var(--navy); font-size:15px;}
+  .bar-row{display:flex; align-items:center; gap:8px; margin:3px 0; font-size:12.5px;}
+  .bar-row .barlabel{width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#3a3730;}
+  .bar-row .barwrap{flex:1; background:#eee8d9; border-radius:3px; height:14px; overflow:hidden;}
+  .bar-row .bar{height:100%; background:var(--seal-red); border-radius:3px; min-width:2px;}
+  .bar-row .barval{width:56px; text-align:right; font-family:'IBM Plex Mono',monospace; color:var(--navy);}
+
   /* Print */
   #printArea{display:none;}
   @media print{
@@ -151,13 +197,23 @@
 <body>
 
 <script>
-// Defensive: if a stale service worker from another app is registered on this
-// origin (localhost:3000), it can intercept requests and blank the page.
-// Unregister anything here so the app always loads fresh from the server.
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function (regs) {
-    regs.forEach(function (r) { r.unregister(); });
-  }).catch(function () {});
+// Register the app's own service worker for offline/install support.
+// Also unregister any stale service worker from another app so this page can't
+// be blanked by it.
+if (("serviceWorker" in navigator)) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.getRegistrations().then(function (regs) {
+      var selfUrl = "/sw.js";
+      var matched = false;
+      regs.forEach(function (r) {
+        if (r.active && r.active.scriptURL.indexOf(selfUrl) !== -1) matched = true;
+        r.unregister();
+      });
+      if ((location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1") && !matched) {
+        navigator.serviceWorker.register("/sw.js").catch(function () {});
+      }
+    }).catch(function () {});
+  });
 }
 </script>
 
@@ -212,6 +268,22 @@ if ("serviceWorker" in navigator) {
     </div>
 
     <div class="field"><label>वार्षिक पारिवारिक आय / Annual Family Income (₹)</label><input type="number" id="income" min="0"></div>
+
+    <div class="field">
+      <label>शिक्षा / Education</label>
+      <select id="education">
+        <option value="">— चुनें / Select —</option>
+        <option value="none">कोई औपचारिक शिक्षा नहीं / No formal education</option>
+        <option value="school">10वीं तक / Up to 10th</option>
+        <option value="hs">12वीं पास / 12th (High School/Intermediate)</option>
+        <option value="graduate">स्नातक / Graduate</option>
+        <option value="postgraduate">स्नातकोत्तर / Postgraduate</option>
+      </select>
+    </div>
+
+    <div class="field"><label>परिवार के सदस्य / Family Size (members)</label><input type="number" id="familySize" min="1" max="30" placeholder="e.g. 4"></div>
+
+    <div class="field" id="landSizeField" style="display:none;"><label>कृषि भूमि (एकड़ में) / Agricultural Land (acres)</label><input type="number" id="landSizeAcres" min="0" step="0.1" placeholder="e.g. 1.5"></div>
 
     <div class="field">
       <label>श्रेणी / Category</label>
@@ -278,12 +350,21 @@ if ("serviceWorker" in navigator) {
   <div class="modal" style="position:relative;">
     <span class="close" onclick="closeModal()">&times;</span>
     <h3 id="modalTitle">Login</h3>
-    <input type="text" id="regName" placeholder="Name" style="display:none;">
-    <input type="email" id="authEmail" placeholder="Email">
-    <input type="password" id="authPassword" placeholder="Password">
-    <div class="msg" id="authMsg"></div>
-    <button class="primary" id="authSubmitBtn" onclick="submitAuth()">Login</button>
-    <div class="switch" id="modalSwitch" onclick="toggleAuthMode()">Don't have an account? Register</div>
+    <div id="authFormView">
+      <input type="text" id="regName" placeholder="Name" style="display:none;">
+      <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
+      <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">
+      <div class="msg" id="authMsg"></div>
+      <button class="primary" id="authSubmitBtn" onclick="submitAuth()">Login</button>
+      <div class="forgot-link" id="forgotLink" onclick="openForgot()">Forgot password?</div>
+      <div class="switch" id="modalSwitch" onclick="toggleAuthMode()">Don't have an account? Register</div>
+    </div>
+    <div id="forgotView" style="display:none;">
+      <input type="email" id="forgotEmail" placeholder="Email" autocomplete="email">
+      <div class="msg" id="forgotMsg"></div>
+      <button class="primary" onclick="submitForgot()">Send reset link</button>
+      <div class="switch" onclick="backToAuth()">← Back to Login</div>
+    </div>
   </div>
 </div>
 
@@ -316,6 +397,34 @@ if ("serviceWorker" in navigator) {
   </div>
 </div>
 
+<!-- My Applications Modal -->
+<div class="modal-backdrop" id="applicationsBackdrop">
+  <div class="modal large">
+    <span class="close" onclick="closeApplications()">&times;</span>
+    <h3>मेरी योजनाएं / My Applications</h3>
+    <div class="app-filters">
+      <select id="appStatusFilter" onchange="renderApplications()">
+        <option value="">Status: All</option>
+        <option value="saved">Saved</option>
+        <option value="applied">Applied</option>
+        <option value="documents_pending">Documents Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+    <div class="modal-body"><div id="applicationsList"></div></div>
+  </div>
+</div>
+
+<!-- Admin Dashboard Modal -->
+<div class="modal-backdrop" id="adminBackdrop">
+  <div class="modal large">
+    <span class="close" onclick="closeAdmin()">&times;</span>
+    <h3>Admin Dashboard — Analytics</h3>
+    <div class="modal-body"><div id="adminContent"><div class="empty-state">लोड हो रहा है… / Loading…</div></div></div>
+  </div>
+</div>
+
 <!-- Hidden print target -->
 <div id="printArea"></div>
 
@@ -328,6 +437,8 @@ const STATES = [
 ];
 
 const selected = { gender:null, category:null, residence:null };
+const EDU_LABELS = { none:"No formal education", school:"Up to 10th", hs:"12th pass", graduate:"Graduate", postgraduate:"Postgraduate" };
+const APP_STATUS_LABELS = { saved:"Saved", applied:"Applied", documents_pending:"Documents Pending", approved:"Approved", rejected:"Rejected" };
 let authToken = localStorage.getItem("ys_token") || null;
 let authMode = "login";
 let lastResult = null;
@@ -360,6 +471,9 @@ function collectUser(){
     state: document.getElementById("state").value,
     residence: selected.residence,
     income: document.getElementById("income").value ? parseInt(document.getElementById("income").value) : null,
+    education: document.getElementById("education").value || null,
+    familySize: document.getElementById("familySize").value ? parseInt(document.getElementById("familySize").value) : null,
+    landSizeAcres: document.getElementById("landSizeAcres").value ? parseFloat(document.getElementById("landSizeAcres").value) : null,
     category: selected.category,
     occupation: document.getElementById("occupation").value,
     landOwner: document.getElementById("landOwner").checked,
@@ -368,6 +482,11 @@ function collectUser(){
     widow: document.getElementById("widow").checked,
     noPucca: document.getElementById("noPucca").checked
   };
+}
+
+function updateLandSizeVisibility(){
+  const show = document.getElementById("landOwner").checked || document.getElementById("occupation").value === "farmer";
+  document.getElementById("landSizeField").style.display = show ? "block" : "none";
 }
 
 function setPill(rowId, val){
@@ -379,13 +498,29 @@ function setPill(rowId, val){
   selected[rowId.replace("Row","")] = val;
 }
 
+function schemeDetailsHTML(s){
+  const docs = (s.documents || []).length
+    ? `<details class="scheme-dets"><summary>📄 आवश्यक दस्तावेज़ / Required Documents</summary><ul class="dets-list">${s.documents.map(d=>`<li>${d}</li>`).join("")}</ul></details>`
+    : "";
+  const steps = (s.steps || []).length
+    ? `<details class="scheme-dets"><summary>➜ आवेदन कैसे करें / How to Apply</summary><ol class="dets-list">${s.steps.map(st=>`<li>${st}</li>`).join("")}</ol></details>`
+    : "";
+  return docs + steps;
+}
+
+function trackButtonHTML(id){
+  if(!authToken) return `<button class="track-btn" onclick="promptLoginForTrack()">+ Track</button>`;
+  return `<button class="track-btn" data-scheme="${id}" onclick="toggleTrack(this)">+ Track</button>`;
+}
+
 function schemeCardHTML(s){
   const levelTag = s.level==="central" ? `<span class="tag central">Central</span>` : `<span class="tag state">${s.state}</span>`;
+  const score = (typeof s.score === "number") ? `<span class="match-chip">${s.score}% Match</span>` : "";
   return `
     <div class="scheme-card">
       <div class="scheme-top">
         <div>
-          <div class="tags">${levelTag}<span class="tag category">${s.category}</span></div>
+          <div class="tags">${levelTag}<span class="tag category">${s.category}</span>${score}</div>
           <h3 class="scheme-name">${s.name}</h3>
           <p class="scheme-name-hi">${s.name_hi||""}</p>
         </div>
@@ -393,7 +528,8 @@ function schemeCardHTML(s){
       </div>
       <p class="scheme-desc">${s.description}</p>
       <p class="scheme-meta"><b>Ministry/Dept:</b> ${s.ministry}</p>
-      <a class="scheme-link" href="${s.official_link}" target="_blank" rel="noopener">Official Portal ↗</a>
+      ${schemeDetailsHTML(s)}
+      <div class="card-actions"><a class="scheme-link" href="${s.official_link}" target="_blank" rel="noopener">Official Portal ↗</a>${trackButtonHTML(s.id)}</div>
     </div>
   `;
 }
@@ -456,11 +592,12 @@ async function runCheck(){
 function nearCardHTML(s){
   const levelTag = s.level==="central" ? `<span class="tag central">Central</span>` : `<span class="tag state">${s.state}</span>`;
   const chips = (s.missed||[]).map(describeMissed).map(m=>`<span class="miss-chip">${m}</span>`).join("");
+  const score = typeof s.score === "number" ? `<span class="match-chip">${s.score}%</span>` : "";
   return `
     <div class="scheme-card">
       <div class="scheme-top">
         <div>
-          <div class="tags">${levelTag}<span class="tag category">${s.category}</span></div>
+          <div class="tags">${levelTag}<span class="tag category">${s.category}</span>${score}</div>
           <h3 class="scheme-name">${s.name}</h3>
           <p class="scheme-name-hi">${s.name_hi||""}</p>
         </div>
@@ -468,7 +605,8 @@ function nearCardHTML(s){
       <div class="miss-list">${chips}</div>
       <p class="scheme-desc">${s.description}</p>
       <p class="scheme-meta"><b>Ministry/Dept:</b> ${s.ministry}</p>
-      <a class="scheme-link" href="${s.official_link}" target="_blank" rel="noopener">Official Portal ↗</a>
+      ${schemeDetailsHTML(s)}
+      <div class="card-actions"><a class="scheme-link" href="${s.official_link}" target="_blank" rel="noopener">Official Portal ↗</a>${trackButtonHTML(s.id)}</div>
     </div>
   `;
 }
@@ -493,6 +631,12 @@ function describeMissed(m){
     case "categoriesOrFemale": return `श्रेणी ${v.join("/").toUpperCase()} या महिला / Needs ${v.join("/").toUpperCase()} or female`;
     case "bplOrCategories": return `BPL या श्रेणी ${v.join("/").toUpperCase()} / Needs BPL or ${v.join("/").toUpperCase()}`;
     case "ageOrWidowOrDisability": return `आयु ${v}+ या विधवा/दिव्यांग / Age ${v}+ or widow/disabled`;
+    case "minEducation": return `शिक्षा: ${EDU_LABELS[v]||v} चाहिए / Needs ${v} education`;
+    case "maxEducation": return `शिक्षा ${EDU_LABELS[v]||v} से ज़्यादा नहीं / Max education ${v}`;
+    case "minLandSize": return `कम से कम ${v} एकड़ भूमि / Needs ${v} acres land`;
+    case "maxLandSize": return `ज़्यादा से ज़्यादा ${v} एकड़ भूमि / Max ${v} acres land`;
+    case "minFamilySize": return `परिवार में कम से कम ${v} सदस्य / Min family size ${v}`;
+    case "maxFamilySize": return `परिवार में अधिकतम ${v} सदस्य / Max family size ${v}`;
     default: return m.code;
   }
 }
@@ -591,7 +735,8 @@ function browseCardHTML(s){
       <p class="scheme-name-hi">${s.name_hi||""}</p>
       <p class="scheme-desc">${s.description}</p>
       <p class="scheme-meta"><b>Ministry/Dept:</b> ${s.ministry}</p>
-      <a class="scheme-link" href="${s.official_link}" target="_blank" rel="noopener">Official Portal ↗</a>
+      ${schemeDetailsHTML(s)}
+      <div class="card-actions"><a class="scheme-link" href="${s.official_link}" target="_blank" rel="noopener">Official Portal ↗</a>${trackButtonHTML(s.id)}</div>
     </div>
   `;
 }
@@ -644,6 +789,9 @@ function rerunCheck(btn){
   const input = JSON.parse(btn.dataset.input);
   document.getElementById("age").value = input.age ?? "";
   document.getElementById("income").value = input.income ?? "";
+  document.getElementById("education").value = input.education || "";
+  document.getElementById("familySize").value = input.familySize ?? "";
+  document.getElementById("landSizeAcres").value = input.landSizeAcres ?? "";
   document.getElementById("state").value = input.state || document.getElementById("state").options[0].value;
   document.getElementById("occupation").value = input.occupation || "farmer";
   setPill("genderRow", input.gender);
@@ -654,9 +802,196 @@ function rerunCheck(btn){
   document.getElementById("disability").checked = !!input.disability;
   document.getElementById("widow").checked = !!input.widow;
   document.getElementById("noPucca").checked = !!input.noPucca;
+  updateLandSizeVisibility();
   closeHistory();
   window.scrollTo({ top: 0, behavior: "smooth" });
   runCheck();
+}
+
+/* ---------- My Applications ---------- */
+let appsCache = [];
+
+function promptLoginForTrack(){
+  openModal("login");
+  document.getElementById("authMsg").textContent = "Scheme track karne ke liye login karein.";
+}
+
+async function toggleTrack(btn){
+  const schemeId = btn.dataset.scheme;
+  const wasTracked = btn.classList.contains("tracked");
+  try{
+    if(wasTracked){
+      await fetch("/api/applications/" + encodeURIComponent(schemeId), { method:"DELETE", headers:{ "Authorization":"Bearer " + authToken } });
+      btn.classList.remove("tracked");
+      btn.textContent = "+ Track";
+    } else {
+      const res = await fetch("/api/applications", { method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer " + authToken }, body: JSON.stringify({ scheme_id: schemeId, status:"saved" }) });
+      if(!res.ok){ const d = await res.json().catch(()=>({})); alert(d.error || "Save nahi hua."); return; }
+      btn.classList.add("tracked");
+      btn.textContent = "✓ Tracked";
+    }
+    loadApplicationsSilently();
+  }catch(e){
+    alert("Server se connect nahi ho paya.");
+  }
+}
+
+async function loadApplicationsSilently(){
+  try{
+    const res = await fetch("/api/applications", { headers:{ "Authorization":"Bearer " + authToken } });
+    if(res.ok){ const d = await res.json(); appsCache = d.applications || []; }
+  }catch(e){}
+}
+
+function openApplications(){
+  document.getElementById("applicationsBackdrop").classList.add("open");
+  renderApplications();
+}
+function closeApplications(){ document.getElementById("applicationsBackdrop").classList.remove("open"); }
+
+async function renderApplications(){
+  const listEl = document.getElementById("applicationsList");
+  listEl.innerHTML = `<div class="empty-state">लोड हो रहा है… / Loading…</div>`;
+  try{
+    await loadApplicationsSilently();
+    const filter = document.getElementById("appStatusFilter").value;
+    const list = filter ? appsCache.filter(a=>a.status===filter) : appsCache;
+    if(!list.length){
+      listEl.innerHTML = `<div class="empty-state">Abhi koi tracked scheme nahi — result card ke "+ Track" se add karein.<br>No tracked schemes yet — use "+ Track" on any scheme card.</div>`;
+      return;
+    }
+    listEl.innerHTML = list.map(a=>`
+      <div class="app-card">
+        <div class="scheme-top"><div>
+          <div class="tags"><span class="tag category">${a.category||""}</span><span class="app-status ${a.status}">${APP_STATUS_LABELS[a.status]||a.status}</span></div>
+          <h3 class="scheme-name">${a.name}</h3>
+          <p class="scheme-name-hi">${a.name_hi||""}</p>
+        </div></div>
+        ${a.notes ? `<p class="app-notes">Note: ${a.notes}</p>` : ""}
+        <div class="app-actions">
+          <select onchange="changeAppStatus('${a.scheme_id}', this.value)">
+            ${Object.keys(APP_STATUS_LABELS).map(s=>`<option value="${s}" ${a.status===s?"selected":""}>${APP_STATUS_LABELS[s]}</option>`).join("")}
+          </select>
+          <button class="btn danger" onclick="deleteApp('${a.scheme_id}', this)">Remove</button>
+          <a class="scheme-link" href="${a.official_link||"#"}" target="_blank" rel="noopener" style="margin-top:0;">Official Portal ↗</a>
+        </div>
+      </div>`).join("");
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-state">Applications load nahi hui.<br>Could not load applications.</div>`;
+  }
+}
+
+async function changeAppStatus(schemeId, status){
+  try{
+    await fetch("/api/applications/" + encodeURIComponent(schemeId), { method:"PATCH", headers:{ "Content-Type":"application/json", "Authorization":"Bearer " + authToken }, body: JSON.stringify({ status }) });
+    renderApplications();
+  }catch(e){ alert("Status update nahi hua."); }
+}
+
+async function deleteApp(schemeId, btn){
+  try{
+    await fetch("/api/applications/" + encodeURIComponent(schemeId), { method:"DELETE", headers:{ "Authorization":"Bearer " + authToken } });
+    btn.closest(".app-card").remove();
+    loadApplicationsSilently();
+  }catch(e){ alert("Delete nahi hua."); }
+}
+
+/* ---------- Admin Dashboard ---------- */
+function openAdmin(){
+  document.getElementById("adminBackdrop").classList.add("open");
+  loadAdminStats();
+}
+function closeAdmin(){ document.getElementById("adminBackdrop").classList.remove("open"); }
+
+function barsFor(array, labelKey){
+  if(!array || !array.length) return `<p class="app-notes">No data yet.</p>`;
+  const max = Math.max(...array.map(r=>r.n));
+  return array.map(r=>{
+    const w = Math.max(2, Math.round((r.n / max) * 100));
+    return `<div class="bar-row"><span class="barlabel">${r[labelKey]||"–"}</span><span class="barwrap"><span class="bar" style="width:${w}%"></span></span><span class="barval">${r.n}</span></div>`;
+  }).join("");
+}
+
+async function loadAdminStats(){
+  const el = document.getElementById("adminContent");
+  el.innerHTML = `<div class="empty-state">लोड हो रहा है… / Loading…</div>`;
+  try{
+    const res = await fetch("/api/admin/stats", { headers:{ "Authorization":"Bearer " + authToken } });
+    const data = await res.json();
+    if(!res.ok){
+      el.innerHTML = `<div class="empty-state">${data.error || "Access denied."}</div>`;
+      return;
+    }
+    const trend = (data.trend || []).map(t=>`
+      <div class="bar-row"><span class="barlabel">${t.day}</span><span class="barwrap"><span class="bar" style="width:${Math.max(2, Math.round((t.n / Math.max(...(data.trend||[]).map(x=>x.n),1)) * 100))}%"></span></span><span class="barval">${t.n}</span></div>`).join("") ||
+      `<p class="app-notes">No checks in the last 7 days.</p>`;
+
+    el.innerHTML = `
+      <div class="admin-grid">
+        <div class="stat-card"><div class="num">${data.users}</div><div class="lbl">Users</div></div>
+        <div class="stat-card"><div class="num">${data.checks}</div><div class="lbl">Eligibility checks</div></div>
+        <div class="stat-card"><div class="num">${data.applications}</div><div class="lbl">Tracked applications</div></div>
+        <div class="stat-card"><div class="num">${data.schemes}</div><div class="lbl">Schemes</div></div>
+      </div>
+      <div class="admin-section"><h4>Checks — last 7 days</h4>${trend}</div>
+      <div class="admin-section"><h4>Most matched schemes</h4>${barsFor(data.topSchemes, "name")}</div>
+      <div class="admin-section"><h4>State-wise checks</h4>${barsFor(data.topStates, "state")}</div>
+      <div class="admin-section"><h4>Category-wise checks</h4>${barsFor(data.topCategories, "category")}</div>`;
+  }catch(e){
+    el.innerHTML = `<div class="empty-state">Analytics load nahi hui.<br>Could not load analytics.</div>`;
+  }
+}
+
+/* ---------- Password reset / email verify (hash routes) ---------- */
+function parseHashAndHandle(){
+  const h = location.hash || "";
+  if(h.indexOf("#reset?") === 0){
+    const params = new URLSearchParams(h.slice("#reset?".length));
+    const token = params.get("token");
+    openResetView(token);
+  } else if(h.indexOf("#verify?") === 0){
+    const params = new URLSearchParams(h.slice("#verify?".length));
+    const token = params.get("token");
+    submitVerify(token);
+  }
+}
+
+function openResetView(token){
+  const msg = document.getElementById("authMsg");
+  document.getElementById("authFormView").style.display = "none";
+  document.getElementById("forgotView").style.display = "block";
+  document.getElementById("modalTitle").textContent = "Set New Password";
+  document.getElementById("forgotView").innerHTML = `
+    <input type="password" id="newPass" placeholder="New password (min 6 chars)">
+    <div class="msg" id="forgotMsg"></div>
+    <button class="primary" onclick="submitReset('${token}')">Set password</button>
+    <div class="switch" onclick="backToAuth()">← Back to Login</div>`;
+  document.getElementById("modalBackdrop").classList.add("open");
+}
+
+async function submitReset(token){
+  const pass = document.getElementById("newPass").value;
+  const msg = document.getElementById("forgotMsg");
+  if(pass.length < 6){ msg.style.color="var(--seal-red)"; msg.textContent = "Password kam se kam 6 characters ka hona chahiye."; return; }
+  try{
+    const res = await fetch("/api/auth/reset", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ token, password: pass }) });
+    const data = await res.json();
+    if(!res.ok){ msg.style.color="var(--seal-red)"; msg.textContent = data.error || "Reset nahi hua."; return; }
+    msg.style.color="var(--seal-green)";
+    msg.textContent = "Password update ho gaya — ab login karein. / Password updated — please log in.";
+    document.getElementById("forgotView").innerHTML = `<div class="switch" onclick="afterResetBack()">← Back to Login</div>`;
+    document.getElementById("forgotMsg").style.marginTop = "8px";
+  }catch(e){
+    msg.style.color="var(--seal-red)"; msg.textContent = "Server se connect nahi ho paya.";
+  }
+}
+
+async function submitVerify(token){
+  try{
+    await fetch("/api/auth/verify", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ token }) });
+  }catch(e){}
+  location.hash = "";
+  if(authToken) renderAuthBox();
 }
 
 /* ---------- Auth Modal ---------- */
@@ -667,7 +1002,10 @@ function openModal(mode){
 }
 function closeModal(){
   document.getElementById("modalBackdrop").classList.remove("open");
+  document.getElementById("forgotView").style.display = "none";
+  document.getElementById("authFormView").style.display = "block";
   document.getElementById("authMsg").textContent = "";
+  document.getElementById("forgotMsg").textContent = "";
 }
 function toggleAuthMode(){
   authMode = authMode === "login" ? "register" : "login";
@@ -679,7 +1017,49 @@ function updateModalMode(){
   document.getElementById("regName").style.display = isRegister ? "block" : "none";
   document.getElementById("authSubmitBtn").textContent = isRegister ? "Register" : "Login";
   document.getElementById("modalSwitch").textContent = isRegister ? "Already have an account? Login" : "Don't have an account? Register";
+  document.getElementById("forgotLink").style.display = isRegister ? "none" : "block";
   document.getElementById("authMsg").textContent = "";
+}
+function openForgot(){
+  document.getElementById("authFormView").style.display = "none";
+  document.getElementById("forgotView").style.display = "block";
+  document.getElementById("modalTitle").textContent = "Forgot Password";
+  document.getElementById("forgotMsg").textContent = "";
+}
+function backToAuth(){
+  if(location.hash) history.replaceState(null, "", location.pathname + location.search);
+  const fv = document.getElementById("forgotView");
+  fv.style.display = "none";
+  fv.innerHTML = `
+    <input type="email" id="forgotEmail" placeholder="Email" autocomplete="email">
+    <div class="msg" id="forgotMsg"></div>
+    <button class="primary" onclick="submitForgot()">Send reset link</button>
+    <div class="switch" onclick="backToAuth()">← Back to Login</div>`;
+  document.getElementById("authFormView").style.display = "block";
+  document.getElementById("modalTitle").textContent = authMode === "register" ? "Register" : "Login";
+  updateModalMode();
+}
+function afterResetBack(){
+  backToAuth();
+  document.getElementById("authPassword").value = "";
+  openModal("login");
+}
+async function submitForgot(){
+  const email = document.getElementById("forgotEmail").value.trim();
+  const msg = document.getElementById("forgotMsg");
+  if(!email){ msg.textContent = "Email daalein / Enter your email."; return; }
+  msg.style.color = "var(--seal-red)";
+  msg.textContent = "भेजा जा रहा है… Sending…";
+  try{
+    const res = await fetch("/api/auth/forgot", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ email }) });
+    const data = await res.json();
+    if(!res.ok){ msg.textContent = data.error || "Something went wrong."; return; }
+    msg.style.color = "var(--seal-green)";
+    msg.textContent = "Reset link bhej diya gaya (agar account hai to). / If the account exists, a reset link has been sent.";
+  }catch(e){
+    msg.style.color = "var(--seal-red)";
+    msg.textContent = "Server se connect nahi ho paya.";
+  }
 }
 
 async function submitAuth(){
@@ -717,7 +1097,8 @@ function renderAuthBox(){
   const box = document.getElementById("authBox");
   if(authToken){
     const user = JSON.parse(localStorage.getItem("ys_user") || "{}");
-    box.innerHTML = `<span class="userchip">Hi, ${user.name || "User"}</span><button onclick="openHistory()">My History</button><button onclick="logout()">Logout</button>`;
+    const adminBtn = user.role === "admin" ? `<button onclick="openAdmin()">Admin</button>` : "";
+    box.innerHTML = `<span class="userchip">Hi, ${user.name || "User"}</span><button onclick="openApplications()">My Applications</button><button onclick="openHistory()">My History</button>${adminBtn}<button onclick="logout()">Logout</button>`;
   } else {
     box.innerHTML = `<button onclick="openModal('login')">Login</button><button onclick="openModal('register')">Register</button>`;
   }
@@ -727,8 +1108,14 @@ populateStates();
 setupPills("genderRow","gender");
 setupPills("categoryRow","category");
 setupPills("residenceRow","residence");
+document.getElementById("landOwner").addEventListener("change", updateLandSizeVisibility);
+document.getElementById("occupation").addEventListener("change", updateLandSizeVisibility);
+updateLandSizeVisibility();
 loadSchemeCount();
 renderAuthBox();
+if (authToken) loadApplicationsSilently();
+window.addEventListener("hashchange", parseHashAndHandle);
+parseHashAndHandle();
 </script>
 
 </body>

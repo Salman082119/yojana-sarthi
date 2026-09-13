@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="36" fill="#1A2B4C"/>
+  <circle cx="96" cy="96" r="60" fill="none" stroke="#C46A21" stroke-width="6"/>
+  <circle cx="96" cy="96" r="48" fill="none" stroke="#EFE7D4" stroke-width="3"/>
+  <text x="96" y="118" font-family="serif" font-size="72" font-weight="700" fill="#EFE7D4" text-anchor="middle">यो</text>
+</svg>

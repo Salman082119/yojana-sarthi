@@ -17,6 +17,10 @@
 //   requiresDisability         - true
 //   requiresWidow              - true
 //   requiresNoPucca            - true
+//   minEducation               - string: none|school|hs|graduate|postgraduate
+//   minLandSize                - number (acres, needs landOwner)
+//   maxLandSize                - number (acres)
+//   minFamilySize, maxFamilySize - number (household members)
 
 const pool = require("./db");
 const fs = require("fs");
@@ -90,7 +94,112 @@ const schemes = [
   { id: "raj_rajshree", name: "Rajasthan Rajshree Yojana", name_hi: "राजश्री योजना", level: "state", state: "Rajasthan", ministry: "Govt. of Rajasthan", category: "Women & Household", description: "Cash incentives for the girl child from birth till college for families below the income ceiling in Rajasthan.", official_link: "https://rajshree.rajasthan.gov.in", criteria: { states: ["Rajasthan"], genders: ["female"], maxAge: 18, maxIncome: 300000 } },
   { id: "hr_ladli_lakshmi", name: "Haryana Mukhyamantri Ladli Lakshmi Yojana", name_hi: "मुख्यमंत्री लाडली लक्ष्मी योजना", level: "state", state: "Haryana", ministry: "Govt. of Haryana", category: "Women & Household", description: "Savings scheme depositing money for the girl child up to age 18 in low-income families of Haryana.", official_link: "https://wcdhry.gov.in", criteria: { states: ["Haryana"], genders: ["female"], maxAge: 18, maxIncome: 180000 } },
   { id: "up_rani_laxmibai", name: "UP Rani Laxmibai Pension Yojana", name_hi: "रानी लक्ष्मीबाई पेंशन योजना", level: "state", state: "Uttar Pradesh", ministry: "Govt. of Uttar Pradesh", category: "Pension", description: "Improved monthly pension for widows in Uttar Pradesh unable to fully support themselves after losing their husband.", official_link: "https://socialwelfare.up.gov.in", criteria: { states: ["Uttar Pradesh"], genders: ["female"], requiresWidow: true, minAge: 18 } },
+
+  { id: "pmksy", name: "Pradhan Mantri Krishi Sinchayee Yojana (PMKSY)", name_hi: "प्रधानमंत्री कृषि सिंचाई योजना", level: "central", state: null, ministry: "Ministry of Agriculture & Farmers Welfare", category: "Agriculture", description: "Assistance for micro-irrigation (drip/sprinkler), water conservation and irrigation efficiency for farmers.", official_link: "https://pmksy.gov.in", criteria: { minAge: 18, occupations: ["farmer"], requiresLandOwner: true } },
+  { id: "pmfme", name: "PM Formalisation of Micro Food Processing Enterprises (PM-FME)", name_hi: "प्रधानमंत्री सूक्ष्म खाद्य प्रसंस्करण उद्यम योजना", level: "central", state: null, ministry: "Ministry of Food Processing Industries", category: "Employment & Business", description: "Credit-linked subsidy up to ₹10 lakh for micro food-processing units and informal food entrepreneurs.", official_link: "https://pmfme.mofpi.gov.in", criteria: { minAge: 18, occupations: ["self_employed"] } },
+  { id: "pm_vidyalaxmi", name: "PM VidyaLaxmi Scheme", name_hi: "प्रधानमंत्री विद्यालक्ष्मी योजना", level: "central", state: null, ministry: "Ministry of Finance (Department of Financial Services)", category: "Education", description: "Education loans up to ₹10 lakh without collateral for students admitted to quality higher-education institutions.", official_link: "https://www.vidyalakshmi.co.in", criteria: { occupations: ["student"], minAge: 18, maxAge: 29, minEducation: "hs" } },
+  { id: "pm_poshan", name: "PM Poshan Shakti Nirman (Mid-Day Meal)", name_hi: "पीएम पोषण शक्ति निर्माण", level: "central", state: null, ministry: "Ministry of Education", category: "Education", description: "Nutritious hot cooked meal for children of government / government-aided schools to improve nutrition and attendance.", official_link: "https://pmposhan.education.gov.in", criteria: { occupations: ["student"], minAge: 5, maxAge: 12 } },
+  { id: "nps_vatsalya", name: "NPS Vatsalya", name_hi: "एनपीएस वात्सल्य", level: "central", state: null, ministry: "Ministry of Finance (PFRDA)", category: "Financial Inclusion", description: "Pension savings account under NPS for minor children, opened and managed by parents/guardians until they turn 18.", official_link: "https://npsvatsalya.nsdl.com", criteria: { maxAge: 17 } },
+  { id: "pm_apprenticeship", name: "PM Youth Apprenticeship Scheme", name_hi: "प्रधानमंत्री युवा प्रशिक्षुता योजना", level: "central", state: null, ministry: "Ministry of Labour & Employment", category: "Employment & Business", description: "Up to ₹7,500 monthly stipend along with on-the-job training for new graduates and diploma holders.", official_link: "https://apprenticeshipindia.gov.in", criteria: { minAge: 21, maxAge: 24, occupations: ["student", "unemployed"], minEducation: "graduate" } },
+  { id: "pm_sse_disabled", name: "PM Self-Employment Scheme for Disabled Persons", name_hi: "दिव्यांगजन स्वरोजगार योजना", level: "central", state: null, ministry: "Ministry of Social Justice & Empowerment", category: "Employment & Business", description: "Bank loans up to ₹50 lakh with subsidy for self-employment ventures of persons with disabilities.", official_link: "https://socialjustice.gov.in", criteria: { requiresDisability: true, minAge: 18, occupations: ["self_employed"] } },
+  { id: "pmgkay", name: "PM Garib Kalyan Anna Yojana (PMGKAY)", name_hi: "प्रधानमंत्री गरीब कल्याण अन्न योजना", level: "central", state: null, ministry: "Ministry of Consumer Affairs, Food & PD", category: "Food Security", description: "Free food grains (5 kg per person per month) to NFSA ration-card holder families.", official_link: "https://www.nfsa.gov.in", criteria: { requiresBPL: true } },
+  { id: "jjm", name: "Jal Jeevan Mission", name_hi: "जल जीवन मिशन", level: "central", state: null, ministry: "Ministry of Jal Shakti", category: "Housing", description: "Tap-water connection to every rural household, with special priority to households in villages with high water contamination.", official_link: "https://jalshakti-ddws.gov.in", criteria: { residences: ["rural"] } },
+  { id: "saubhagya", name: "Pradhan Mantri Sahaj Bijli Har Ghar Yojana (SAUBHAGYA)", name_hi: "सौभाग्य योजना", level: "central", state: null, ministry: "Ministry of Power", category: "Housing", description: "Electrification of unelectrified rural and urban households with free/subsidised connections for last-mile families.", official_link: "https://saubhagya.gov.in", criteria: { residences: ["rural"] } },
+  { id: "sbm_g2", name: "Swachh Bharat Mission - Grameen (Phase II)", name_hi: "स्वच्छ भारत मिशन ग्रामीण", level: "central", state: null, ministry: "Ministry of Jal Shakti", category: "Women & Household", description: "Support for individual household toilets and solid/liquid waste management in rural areas.", official_link: "https://sbm.gov.in", criteria: { residences: ["rural"], requiresNoPucca: true } },
+  { id: "pm_suryodaya", name: "PM Suryodaya Yojana", name_hi: "प्रधानमंत्री सूर्योदय योजना", level: "central", state: null, ministry: "Ministry of Finance", category: "Housing", description: "Rooftop solar installations for economically weaker households living in slum / urban poor housing.", official_link: "https://pmsuryodaya.gov.in", criteria: { residences: ["urban"], requiresBPL: true } },
 ];
+
+// Category-level default documents & apply steps, so every scheme has a useful
+// checklist. Specific schemes can override with entries in schemeDetails.
+const CATEGORY_DEFAULTS = {
+  Agriculture: {
+    documents: ["Aadhaar card", "Identity proof (Voter/PAN/Driving licence)", "Land records (Khasra / Patta / RoR)", "Bank account passbook", "Income certificate (if applicable)"],
+    steps: ["Check eligibility and documents on the official portal", "Register / login on the scheme portal", "Fill the online application form", "Upload required documents", "Track your application / acknowledgement number"],
+  },
+  "Women & Household": {
+    documents: ["Aadhaar card", "Identity proof", "Address proof / residence certificate", "Bank account passbook (with IFSC)", "Ration card / SES certificate (if required)"],
+    steps: ["Verify eligibility on the official portal", "Register on the nearest government service centre or online", "Fill the application form", "Submit documents and get acknowledgement", "Track status / benefit disbursement"],
+  },
+  Housing: {
+    documents: ["Aadhaar card", "Identity & address proof", "Land/property papers or dwelling details", "Income certificate", "Ration card (for BPL schemes)"],
+    steps: ["Confirm eligibility on the official portal", "Apply online or at the local office (gram panchayat / urban body)", "Fill in beneficiary details", "Upload documents and submit", "Track application status"],
+  },
+  Health: {
+    documents: ["Aadhaar card", "Identity proof", "Ration card / SES certificate (for PM-JAY)", "Bank account details", "Recent income proof (if required)"],
+    steps: ["Check the scheme's eligibility criteria", "Enrol online or at the nearest empanelled centre", "Complete the enrolment form", "Verify documents and receive the card/ID", "Use the benefits at empanelled hospitals"],
+  },
+  Pension: {
+    documents: ["Aadhaar card", "Age proof / birth certificate", "Bank account passbook", "Proof of residence", "BPL/widow/disability certificate (as applicable)"],
+    steps: ["Confirm eligibility on the official portal", "Apply at the local office (panchayat / social welfare office) or online", "Fill the pension application", "Submit documents", "Track sanction and monthly disbursement"],
+  },
+  Insurance: {
+    documents: ["Aadhaar card", "Identity proof", "Bank account details (for auto-debit)", "Age proof", "Nominee details"],
+    steps: ["Check eligibility (age limits) for the scheme", "Register through the bank or online portal", "Select the scheme and agree to auto-debit premium", "Provide nominee details", "Enrolment confirmed — keep the policy/acknowledgement"],
+  },
+  Education: {
+    documents: ["Aadhaar card", "Class/marksheet or enrolment proof", "Bank account details (for scholarships)", "Income certificate of parents", "Category certificate (SC/ST/OBC/EWS) if applicable"],
+    steps: ["Verify the scholarship criteria and deadline", "Apply on the National Scholarship Portal or state portal", "Fill the form and upload documents", "Verify the application (institute/parent endorsement)", "Track sanction status on the portal"],
+  },
+  "Employment & Business": {
+    documents: ["Aadhaar card", "Identity proof", "Business plan / project proposal", "Bank account details", "Educational qualification proof (where needed)"],
+    steps: ["Check the scheme's target group and eligibility", "Apply on the portal or at the district office", "Attach the business/project proposal", "Submit and await loan/subsidy sanction", "Track disbursement and repay as per terms"],
+  },
+  "Financial Inclusion": {
+    documents: ["Aadhaar card", "Identity proof", "Bank account details", "Age proof", "Nominee details (for NPS)"],
+    steps: ["Verify eligibility", "Open/apply through the bank or official portal", "Fill the application / KYC form", "Submit documents", "Activation confirmed — track through passbook/portal"],
+  },
+  "Food Security": {
+    documents: ["Aadhaar card", "Ration card (NFSA/PHH)", "Family details", "Bank account (for DBT where applicable)"],
+    steps: ["Check if your family is an NFSA beneficiary", "Verify ration card details at the fair price shop", "Update family details / e-KYC at the ration shop or portal", "Track entitlements in your ration book"],
+  },
+  Disability: {
+    documents: ["Aadhaar card", "Disability certificate (UDID)", "Identity & residence proof", "Bank account details", "Income certificate (if required)"],
+    steps: ["Verify eligibility on the portal", "Apply online or at the district social welfare office", "Fill the application with disability details", "Upload documents including UDID", "Track sanction and benefit disbursement"],
+  },
+  General: {
+    documents: ["Aadhaar card", "Identity proof", "Address proof", "Bank account details", "Income/category certificate (as applicable)"],
+    steps: ["Confirm eligibility on the official portal", "Apply online or at the government office", "Complete and submit the application", "Upload/attach required documents", "Track application status"],
+  },
+};
+
+// Overrides for the most-used schemes with scheme-specific requirements.
+const schemeDetails = {
+  pmkisan: {
+    documents: ["Aadhaar card", "Land ownership documents (ROR/Khatauni)", "Bank account passbook", "Identity proof", "Mobile number"],
+    steps: ["Check name on the PM-KISAN beneficiary list at pmkisan.gov.in", "Register or login on the portal (PM Kisan/PFMS)", "Verify landholding and bank details", "Status and instalments are updated on the portal"],
+  },
+  ayushman: {
+    documents: ["Aadhaar card", "Ration card / SES (SECC 2011) certificate", "Family identity documents", "Contact details"],
+    steps: ["Check if your family is in the SECC eligibility list", "Register/verify at a CSC or empanelled centre", "Generate your Ayushman card (PMJAY-ID)", "Use the card at empanelled hospitals"],
+  },
+  pmay_g: {
+    documents: ["Aadhaar card", "Ration card", "Land/property papers", "Bank account details", "Prior-house status documents"],
+    steps: ["Apply through the gram panchayat or PMAY-G portal", "Beneficiary selection through Awaas+ survey", "Submit application with land & identity papers", "Bank account seeding and approval", "Track construction instalments"],
+  },
+  pmay_u: {
+    documents: ["Aadhaar card", "Address proof (in the city)", "Income certificate", "Bank account details", "Property/no-pucca-house declaration"],
+    steps: ["Register on the PMAY-U portal or at the urban local body", "Choose the vertical (CLSS/AFL/BP) applicable", "Submit application with income and address proof", "Verification by ULB", "Track sanction status"],
+  },
+  nsp: {
+    documents: ["Aadhaar card", "Bonafide student certificate", "Previous year marksheet", "Bank account details", "Income certificate", "Category (SC/ST/OBC/EWS) certificate"],
+    steps: ["Register on the National Scholarship Portal", "Apply for the relevant pre/post-matric scheme", "Fill the form and upload documents", "Institute verification (for post-matric)", "Track sanction and disbursement"],
+  },
+  nrega: {
+    documents: ["Aadhaar card", "Job card (apply at gram panchayat)", "Bank/Post-office account details", "Residence proof in the village"],
+    steps: ["Register for a job card at the gram panchayat", "Ask for work through the job card / portal", "Receive a dated work order", "Attend work and get wage slips", "Wages credited to your account (Muster/DPR verified)"],
+  },
+  pmuy: {
+    documents: ["Aadhaar card", "Photo identity", "Ration card (BPL proof)", "Address proof", "Bank account (for DBT)"],
+    steps: ["Check eligibility through the BPL/SES list", "Apply at the district petrol/LPG distributor office or online", "Fill the Ujjwala 2.0 form", "Deposit the one-time rate if applicable", "Get the connection with free first refill"],
+  },
+};
+
+function detailsFor(s) {
+  const specific = schemeDetails[s.id];
+  if (specific) return { documents: specific.documents, steps: specific.steps };
+  const def = CATEGORY_DEFAULTS[s.category] || CATEGORY_DEFAULTS.General;
+  return { documents: def.documents, steps: def.steps };
+}
 
 async function seed() {
   console.log("Creating tables (if not already present)...");
@@ -99,13 +208,14 @@ async function seed() {
 
   console.log(`Inserting/updating ${schemes.length} schemes...`);
   for (const s of schemes) {
+    const { documents, steps } = detailsFor(s);
     await pool.query(
-      `INSERT INTO schemes (id, name, name_hi, level, state, ministry, category, description, official_link, criteria)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      `INSERT INTO schemes (id, name, name_hi, level, state, ministry, category, description, official_link, criteria, documents, steps)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
        ON CONFLICT (id) DO UPDATE SET
          name=$2, name_hi=$3, level=$4, state=$5, ministry=$6, category=$7,
-         description=$8, official_link=$9, criteria=$10`,
-      [s.id, s.name, s.name_hi, s.level, s.state, s.ministry, s.category, s.description, s.official_link, JSON.stringify(s.criteria)]
+         description=$8, official_link=$9, criteria=$10, documents=$11, steps=$12`,
+      [s.id, s.name, s.name_hi, s.level, s.state, s.ministry, s.category, s.description, s.official_link, JSON.stringify(s.criteria), documents, JSON.stringify(steps)]
     );
   }
   console.log("Seed complete! Schemes in database:", schemes.length);

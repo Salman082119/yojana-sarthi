@@ -8,7 +8,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, name, name_hi, level, state, ministry, category, description, official_link FROM schemes ORDER BY level, category, name"
+      "SELECT id, name, name_hi, level, state, ministry, category, description, official_link, documents, steps FROM schemes ORDER BY level, category, name"
     );
     res.json({ schemes: result.rows, total: result.rows.length });
   } catch (err) {
