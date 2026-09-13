@@ -1,0 +1,19 @@
+# Render Blueprint — deploy Yojana Saarthi on Render's free tier
+# Push this repo to GitHub, connect it in Render, and it will use this file.
+# (Alternative to the manual steps in README.)
+services:
+  - type: web
+    name: yojana-sarthi
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true

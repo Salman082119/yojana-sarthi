@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>योजना सारथी — Government Scheme Eligibility Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEE8D9; --paper-line:#D8CFB6; --ink:#20241F;
+    --navy:#1A2B4C; --navy-2:#101c33; --seal-red:#A32638; --seal-green:#2F6844;
+    --saffron:#C46A21; --muted:#6b6555; --card:#F7F3E7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--navy-2);}
+  body{font-family:'Inter','Noto Sans Devanagari',sans-serif; color:var(--ink); background:var(--navy-2); min-height:100vh;}
+  h1,h2,h3{font-family:'Fraunces','Noto Sans Devanagari',serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  header{background:var(--navy); color:#EFE7D4; padding:22px 6vw; border-bottom:3px solid var(--saffron);}
+  .header-row{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; max-width:1180px; margin:0 auto;}
+  .brand{display:flex; align-items:center; gap:14px;}
+  .emblem{width:48px;height:48px;border-radius:50%; border:2px solid #EFE7D4; display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:700; font-size:20px; color:#EFE7D4;}
+  .brand h1{margin:0; font-size:clamp(22px,3vw,30px);}
+  .brand .tagline{margin:2px 0 0; font-size:13px; color:#c9bfa0;}
+
+  .auth-box{display:flex; gap:8px; align-items:center; font-size:13.5px;}
+  .auth-box button{background:transparent; border:1.4px solid #EFE7D4; color:#EFE7D4; padding:7px 14px; border-radius:20px; cursor:pointer; font-size:13px;}
+  .auth-box button:hover{background:rgba(255,255,255,0.1);}
+  .auth-box .userchip{color:#EFE7D4;}
+
+  .disclaimer{background:#3a2a1c; color:#f0d9b5; font-size:13px; text-align:center; padding:9px 6vw; border-bottom:1px solid #56422c;}
+
+  main{max-width:1180px; margin:0 auto; padding:36px 6vw 80px; display:grid; grid-template-columns:1fr; gap:28px;}
+  @media(min-width:960px){ main{grid-template-columns:420px 1fr; align-items:start;} }
+
+  .ledger{background:var(--paper); border:1px solid var(--paper-line); border-radius:4px; padding:26px; box-shadow:0 20px 45px rgba(0,0,0,0.35);}
+  .ledger h2{margin:0 0 4px; font-size:22px; color:var(--navy);}
+  .ledger .sub{margin:0 0 22px; font-size:13px; color:var(--muted);}
+  .field{margin-bottom:18px;}
+  .field label{display:block; font-size:12.5px; font-weight:600; color:var(--navy); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:6px;}
+  .field input[type=number], .field input[type=text], .field select{width:100%; border:none; border-bottom:1.5px solid #a89f83; background:transparent; font-family:'IBM Plex Mono',monospace; font-size:15px; padding:6px 4px; color:var(--ink); outline:none;}
+  .field input:focus, .field select:focus{border-bottom-color:var(--seal-red);}
+  .radio-row{display:flex; flex-wrap:wrap; gap:10px;}
+  .pill{border:1.4px solid #a89f83; border-radius:20px; padding:6px 14px; font-size:13px; cursor:pointer; user-select:none;}
+  .pill.active{background:var(--navy); border-color:var(--navy); color:#EFE7D4;}
+  .check-inline{display:flex; align-items:center; gap:8px; font-size:13.5px; margin-bottom:10px; cursor:pointer;}
+  .check-inline input{width:16px;height:16px; accent-color:var(--seal-red);}
+  .submit-btn{margin-top:10px; width:100%; padding:13px; border:none; border-radius:3px; background:var(--seal-red); color:#fff; font-weight:600; font-size:15px; cursor:pointer;}
+  .submit-btn:hover{background:#8a1f2f;}
+  .submit-btn:disabled{opacity:0.6; cursor:default;}
+
+  .results-head{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:6px;}
+  .results-head h2{color:#EFE7D4; font-size:24px; margin:0;}
+  .results-count{color:var(--saffron); font-family:'IBM Plex Mono',monospace; font-size:14px;}
+  .results-sub{color:#a79c7d; font-size:13.5px; margin:0 0 22px;}
+  .empty-state{background:rgba(255,255,255,0.04); border:1px dashed rgba(255,255,255,0.2); border-radius:6px; padding:40px 24px; text-align:center; color:#c9bfa0;}
+  .scheme-grid{display:grid; gap:16px;}
+  .scheme-card{background:var(--card); border-radius:5px; padding:20px 22px; position:relative; border:1px solid var(--paper-line); box-shadow:0 10px 24px rgba(0,0,0,0.25);}
+  .scheme-top{display:flex; justify-content:space-between; gap:14px; align-items:flex-start;}
+  .scheme-name{font-family:'Fraunces',serif; font-weight:600; font-size:19px; color:var(--navy); margin:0 0 4px;}
+  .scheme-name-hi{font-size:13.5px; color:var(--muted); margin:0 0 10px;}
+  .tags{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;}
+  .tag{font-size:11px; padding:3px 9px; border-radius:12px; font-weight:600; text-transform:uppercase;}
+  .tag.central{background:#e4d9bd; color:var(--navy);}
+  .tag.state{background:#dbe6df; color:var(--seal-green);}
+  .tag.category{background:#eee1cf; color:var(--saffron);}
+  .scheme-desc{font-size:14px; line-height:1.55; color:#3a3730; margin:0 0 12px;}
+  .scheme-meta{font-size:12.5px; color:var(--muted); line-height:1.7;}
+  .scheme-link{display:inline-block; margin-top:10px; font-size:13px; font-weight:600; color:var(--seal-red); text-decoration:none; border-bottom:1px solid var(--seal-red);}
+  .stamp{flex-shrink:0; width:88px; height:88px; border-radius:50%; border:3px solid var(--seal-red); color:var(--seal-red); display:flex; align-items:center; justify-content:center; text-align:center; transform:rotate(-11deg); font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:11.5px; line-height:1.3; position:relative; mix-blend-mode:multiply; opacity:0.92;}
+  .stamp::after{content:""; position:absolute; inset:6px; border:1px solid var(--seal-red); border-radius:50%;}
+  .stamp span{position:relative; z-index:1;}
+
+  footer{text-align:center; padding:30px 6vw 50px; color:#7d745c; font-size:12.5px;}
+  footer a{color:#c9bfa0;}
+
+  /* Modal */
+  .modal-backdrop{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; z-index:50;}
+  .modal-backdrop.open{display:flex;}
+  .modal{background:var(--paper); border-radius:6px; padding:28px; width:340px; max-width:90vw;}
+  .modal h3{margin:0 0 16px; color:var(--navy);}
+  .modal input{width:100%; padding:9px 10px; margin-bottom:12px; border:1px solid #a89f83; border-radius:3px; font-size:14px; background:#fff;}
+  .modal .msg{font-size:13px; color:var(--seal-red); min-height:18px; margin-bottom:6px;}
+  .modal button.primary{width:100%; padding:11px; background:var(--seal-red); color:#fff; border:none; border-radius:3px; font-weight:600; cursor:pointer;}
+  .modal .switch{text-align:center; margin-top:12px; font-size:13px; color:var(--muted); cursor:pointer;}
+  .modal .close{position:absolute; top:10px; right:14px; cursor:pointer; font-size:18px; color:var(--muted);}
+
+  /* Top action buttons */
+  .header-actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .nav-btn{background:transparent; border:1.4px solid var(--saffron); color:#f3d9b5; padding:7px 14px; border-radius:20px; cursor:pointer; font-size:13px;}
+  .nav-btn:hover{background:rgba(196,106,33,0.18);}
+
+  /* Bigger modals for browse & history */
+  .modal.large{position:relative; width:min(780px,95vw); max-height:84vh; display:flex; flex-direction:column;}
+  .modal-body{overflow-y:auto; padding-right:6px;}
+
+  /* Browse controls */
+  .browse-controls{display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:16px;}
+  @media(min-width:560px){ .browse-controls{grid-template-columns:1fr 1fr;} }
+  .browse-controls input, .browse-controls select{width:100%; padding:9px 10px; border:1px solid #a89f83; border-radius:3px; font-size:13px; background:#fff; color:var(--ink);}
+  .browse-count{font-size:12px; color:var(--muted); font-family:'IBM Plex Mono',monospace; margin:0 0 12px;}
+  .browse-list{display:grid; gap:14px;}
+  .browse-card{background:var(--card); border:1px solid var(--paper-line); border-radius:5px; padding:16px 18px;}
+  .browse-card .scheme-name{font-size:16px; margin:0 0 2px;}
+  .browse-card .scheme-desc{font-size:13px; margin:6px 0 8px;}
+  .browse-card .scheme-meta{font-size:11.5px;}
+
+  /* Near-match section */
+  #nearArea{margin-top:22px; padding-top:18px; border-top:1px dashed rgba(255,255,255,0.18);}
+  .near-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:4px;}
+  .near-head h3{color:#EFE7D4; font-size:18px; margin:0;}
+  .near-count{color:#7fb67f; font-family:'IBM Plex Mono',monospace; font-size:13px;}
+  .near-sub{color:#a79c7d; font-size:12.5px; margin:0 0 16px;}
+  .miss-list{display:flex; gap:6px; flex-wrap:wrap; margin:8px 0 10px;}
+  .miss-chip{background:#f3e3c3; color:#8a5a12; font-size:11px; padding:4px 10px; border-radius:12px; font-weight:600; border:1px solid #e0c896;}
+
+  /* Results action buttons */
+  .result-actions{display:flex; gap:8px;}
+  .result-actions button{background:transparent; border:1px solid var(--saffron); color:var(--saffron); padding:6px 12px; border-radius:16px; cursor:pointer; font-size:12px; font-weight:600;}
+  .result-actions button:hover{background:rgba(196,106,33,0.15);}
+  .result-actions button:disabled{opacity:0.45; cursor:default;}
+
+  /* History cards */
+  .hist-card{background:var(--card); border:1px solid var(--paper-line); border-radius:5px; padding:14px 16px; margin-bottom:12px;}
+  .hist-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:6px;}
+  .hist-date{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--muted);}
+  .hist-matches{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 10px;}
+  .hist-match{font-size:12px; background:#eef0e4; border:1px solid var(--paper-line); border-radius:12px; padding:4px 10px; color:var(--navy);}
+  .hist-none{font-size:12.5px; color:var(--muted); font-style:italic;}
+  .hist-rerun{background:var(--navy); color:#EFE7D4; border:none; border-radius:16px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:600;}
+  .hist-rerun:hover{background:var(--navy-2);}
+
+  /* Print */
+  #printArea{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{display:block; position:absolute; inset:0; background:#fff; color:#111; padding:24px; font-family:'Inter','Noto Sans Devanagari',sans-serif;}
+    #printArea h1{font-size:20px; margin:0 0 4px;}
+    #printArea h3{margin:0 0 2px; font-size:15px;}
+    #printArea .p-sub{font-size:11px; color:#555; margin:0 0 16px;}
+    #printArea .p-scheme{border-top:1px solid #ccc; padding:10px 0; page-break-inside:avoid;}
+    #printArea .p-scheme p{margin:2px 0; font-size:12px;}
+    #printArea a{color:#0645ad;}
+    #printArea .p-foot{margin-top:14px; font-size:10.5px; color:#777; border-top:1px solid #ccc; padding-top:8px;}
+  }
+</style>
+</head>
+<body>
+
+<script>
+// Defensive: if a stale service worker from another app is registered on this
+// origin (localhost:3000), it can intercept requests and blank the page.
+// Unregister anything here so the app always loads fresh from the server.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function (regs) {
+    regs.forEach(function (r) { r.unregister(); });
+  }).catch(function () {});
+}
+</script>
+
+<header>
+  <div class="header-row">
+    <div class="brand">
+      <div class="emblem">यो</div>
+      <div>
+        <h1>योजना सारथी <span style="font-size:15px; font-weight:400; color:#c9bfa0;">Yojana Saarthi</span></h1>
+        <p class="tagline">Government Scheme Eligibility Register</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="nav-btn" onclick="openBrowse()">सभी योजनाएं / All Schemes</button>
+      <div class="auth-box" id="authBox">
+        <button onclick="openModal('login')">Login</button>
+        <button onclick="openModal('register')">Register</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="disclaimer">
+  <b>जानकारी हेतु / For information only:</b> यह टूल एक सामान्य मार्गदर्शक है। आवेदन से पहले आधिकारिक पोर्टल पर पात्रता की पुष्टि करें।
+  This is a guidance tool — always verify on the scheme's official portal before applying.
+</div>
+
+<main>
+  <section class="ledger">
+    <h2>अपनी जानकारी भरें</h2>
+    <p class="sub">Fill in your details to check eligibility</p>
+
+    <div class="field"><label>आयु / Age (years)</label><input type="number" id="age" min="0" max="120"></div>
+
+    <div class="field">
+      <label>लिंग / Gender</label>
+      <div class="radio-row" id="genderRow">
+        <div class="pill" data-val="male">पुरुष / Male</div>
+        <div class="pill" data-val="female">महिला / Female</div>
+        <div class="pill" data-val="other">अन्य / Other</div>
+      </div>
+    </div>
+
+    <div class="field"><label>राज्य / State or UT</label><select id="state"></select></div>
+
+    <div class="field">
+      <label>क्षेत्र / Residence Area</label>
+      <div class="radio-row" id="residenceRow">
+        <div class="pill" data-val="rural">ग्रामीण / Rural</div>
+        <div class="pill" data-val="urban">शहरी / Urban</div>
+      </div>
+    </div>
+
+    <div class="field"><label>वार्षिक पारिवारिक आय / Annual Family Income (₹)</label><input type="number" id="income" min="0"></div>
+
+    <div class="field">
+      <label>श्रेणी / Category</label>
+      <div class="radio-row" id="categoryRow">
+        <div class="pill" data-val="general">सामान्य / General</div>
+        <div class="pill" data-val="obc">OBC</div>
+        <div class="pill" data-val="sc">SC</div>
+        <div class="pill" data-val="st">ST</div>
+        <div class="pill" data-val="ews">EWS</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>व्यवसाय / Occupation</label>
+      <select id="occupation">
+        <option value="farmer">किसान / Farmer</option>
+        <option value="student">विद्यार्थी / Student</option>
+        <option value="laborer">दिहाड़ी मजदूर / Daily Wage Laborer</option>
+        <option value="unemployed">बेरोजगार / Unemployed</option>
+        <option value="self_employed">स्वरोजगार / Self-employed</option>
+        <option value="private_salaried">निजी नौकरी / Private Salaried</option>
+        <option value="govt_employee">सरकारी कर्मचारी / Govt. Employee</option>
+        <option value="homemaker">गृहिणी / Homemaker</option>
+        <option value="retired">सेवानिवृत्त / Retired</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>अतिरिक्त जानकारी / Additional details</label>
+      <label class="check-inline"><input type="checkbox" id="landOwner"> कृषि भूमि है / Owns agricultural land</label>
+      <label class="check-inline"><input type="checkbox" id="bpl"> BPL राशन कार्ड</label>
+      <label class="check-inline"><input type="checkbox" id="disability"> दिव्यांग / Person with disability</label>
+      <label class="check-inline"><input type="checkbox" id="widow"> विधवा / Widow</label>
+      <label class="check-inline"><input type="checkbox" id="noPucca"> पक्का घर नहीं है / No pucca house</label>
+    </div>
+
+    <button class="submit-btn" id="checkBtn" onclick="runCheck()">पात्रता जांचें — Check Eligibility</button>
+  </section>
+
+  <section>
+    <div class="results-head">
+      <h2>पात्र योजनाएं</h2>
+      <div class="result-actions">
+        <button id="shareBtn" onclick="shareResults()" disabled>Share</button>
+        <button id="printBtn" onclick="printResults()" disabled>Print / PDF</button>
+        <span class="results-count mono" id="resultsCount"></span>
+      </div>
+    </div>
+    <p class="results-sub">Live results from the database — <span id="schemeTotal">...</span> schemes loaded.</p>
+    <div id="resultsArea">
+      <div class="empty-state">बाईं ओर फॉर्म भरें और "पात्रता जांचें" दबाएं।<br>Fill the form and press "Check Eligibility".</div>
+    </div>
+    <div id="nearArea"></div>
+  </section>
+</main>
+
+<footer>
+  Yojana Saarthi — real backend with PostgreSQL database. Login to save your check history.
+  Always verify on <a href="https://www.myscheme.gov.in" target="_blank">myscheme.gov.in</a> or the official portal.
+</footer>
+
+<!-- Auth Modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" style="position:relative;">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h3 id="modalTitle">Login</h3>
+    <input type="text" id="regName" placeholder="Name" style="display:none;">
+    <input type="email" id="authEmail" placeholder="Email">
+    <input type="password" id="authPassword" placeholder="Password">
+    <div class="msg" id="authMsg"></div>
+    <button class="primary" id="authSubmitBtn" onclick="submitAuth()">Login</button>
+    <div class="switch" id="modalSwitch" onclick="toggleAuthMode()">Don't have an account? Register</div>
+  </div>
+</div>
+
+<!-- Browse All Schemes Modal -->
+<div class="modal-backdrop" id="browseBackdrop">
+  <div class="modal large">
+    <span class="close" onclick="closeBrowse()">&times;</span>
+    <h3>सभी योजनाएं / All Schemes</h3>
+    <div class="browse-controls">
+      <input type="text" id="browseSearch" placeholder="Search schemes…" oninput="renderBrowse()">
+      <select id="browseCategory" onchange="renderBrowse()"></select>
+      <select id="browseLevel" onchange="renderBrowse()"><option value="">Level: All</option><option value="central">Central</option><option value="state">State</option></select>
+      <select id="browseState" onchange="renderBrowse()"></select>
+    </div>
+    <p class="browse-count" id="browseCount"></p>
+    <div class="modal-body">
+      <div class="browse-list" id="browseList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal-backdrop" id="historyBackdrop">
+  <div class="modal large">
+    <span class="close" onclick="closeHistory()">&times;</span>
+    <h3>आपकी जांचें / My Check History</h3>
+    <div class="modal-body">
+      <div id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden print target -->
+<div id="printArea"></div>
+
+<script>
+const STATES = [
+  "All-India / Central Only","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa",
+  "Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra",
+  "Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
+  "Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Delhi (NCT)","Jammu & Kashmir","Ladakh","Puducherry"
+];
+
+const selected = { gender:null, category:null, residence:null };
+let authToken = localStorage.getItem("ys_token") || null;
+let authMode = "login";
+let lastResult = null;
+let schemesCache = null;
+
+function populateStates(){
+  const sel = document.getElementById("state");
+  STATES.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s; opt.textContent = s;
+    sel.appendChild(opt);
+  });
+}
+
+function setupPills(rowId, key){
+  const row = document.getElementById(rowId);
+  row.querySelectorAll(".pill").forEach(p=>{
+    p.addEventListener("click", ()=>{
+      row.querySelectorAll(".pill").forEach(x=>x.classList.remove("active"));
+      p.classList.add("active");
+      selected[key] = p.dataset.val;
+    });
+  });
+}
+
+function collectUser(){
+  return {
+    age: parseInt(document.getElementById("age").value) || null,
+    gender: selected.gender,
+    state: document.getElementById("state").value,
+    residence: selected.residence,
+    income: document.getElementById("income").value ? parseInt(document.getElementById("income").value) : null,
+    category: selected.category,
+    occupation: document.getElementById("occupation").value,
+    landOwner: document.getElementById("landOwner").checked,
+    bpl: document.getElementById("bpl").checked,
+    disability: document.getElementById("disability").checked,
+    widow: document.getElementById("widow").checked,
+    noPucca: document.getElementById("noPucca").checked
+  };
+}
+
+function setPill(rowId, val){
+  const row = document.getElementById(rowId);
+  if(!row || !val) return;
+  row.querySelectorAll(".pill").forEach(p=>{
+    p.classList.toggle("active", p.dataset.val === val);
+  });
+  selected[rowId.replace("Row","")] = val;
+}
+
+function schemeCardHTML(s){
+  const levelTag = s.level==="central" ? `<span class="tag central">Central</span>` : `<span class="tag state">${s.state}</span>`;
+  return `
+    <div class="scheme-card">
+      <div class="scheme-top">
+        <div>
+          <div class="tags">${levelTag}<span class="tag category">${s.category}</span></div>
+          <h3 class="scheme-name">${s.name}</h3>
+          <p class="scheme-name-hi">${s.name_hi||""}</p>
+        </div>
+        <div class="stamp"><span>पात्र<br>ELIGIBLE</span></div>
+      </div>
+      <p class="scheme-desc">${s.description}</p>
+      <p class="scheme-meta"><b>Ministry/Dept:</b> ${s.ministry}</p>
+      <a class="scheme-link" href="${s.official_link}" target="_blank" rel="noopener">Official Portal ↗</a>
+    </div>
+  `;
+}
+
+async function loadSchemeCount(){
+  try{
+    const res = await fetch("/api/schemes");
+    const data = await res.json();
+    document.getElementById("schemeTotal").textContent = data.total;
+  }catch(e){
+    document.getElementById("schemeTotal").textContent = "?";
+  }
+}
+
+async function runCheck(){
+  const u = collectUser();
+  const btn = document.getElementById("checkBtn");
+  btn.disabled = true; btn.textContent = "जांच रहे हैं... Checking...";
+
+  const headers = { "Content-Type":"application/json" };
+  if (authToken) headers["Authorization"] = "Bearer " + authToken;
+
+  try{
+    const res = await fetch("/api/check", { method:"POST", headers, body: JSON.stringify(u) });
+    const data = await res.json();
+    lastResult = data;
+    document.getElementById("shareBtn").disabled = false;
+    document.getElementById("printBtn").disabled = false;
+
+    const area = document.getElementById("resultsArea");
+    const count = document.getElementById("resultsCount");
+    count.textContent = `${data.count} MATCH${data.count===1?"":"ES"}`;
+
+    if(!data.matches || data.matches.length === 0){
+      area.innerHTML = `<div class="empty-state">आपकी जानकारी के अनुसार कोई योजना मेल नहीं खाई।<br>No schemes matched your details.</div>`;
+    } else {
+      area.innerHTML = `<div class="scheme-grid">${data.matches.map(schemeCardHTML).join("")}</div>`;
+    }
+
+    const nearArea = document.getElementById("nearArea");
+    if(data.nearMatches && data.nearMatches.length > 0){
+      nearArea.innerHTML = `
+        <div class="near-head">
+          <h3>करीब पास हुईं / Almost Eligible</h3>
+          <span class="near-count mono">${data.nearCount} NEAR${data.nearCount===1?"":"S"}</span>
+        </div>
+        <p class="near-sub">Sirf ek-do shart aapme poori nahi — agar wo pooree kar lein, ye yojanaen milein.<br>You were just one or two conditions short of these schemes.</p>
+        <div class="scheme-grid">${data.nearMatches.map(nearCardHTML).join("")}</div>`;
+    } else {
+      nearArea.innerHTML = "";
+    }
+  }catch(e){
+    document.getElementById("resultsArea").innerHTML = `<div class="empty-state">Server se connect nahi ho paya. Backend chalu hai check karein.</div>`;
+    document.getElementById("nearArea").innerHTML = "";
+  }finally{
+    btn.disabled = false; btn.textContent = "पात्रता जांचें — Check Eligibility";
+  }
+}
+
+function nearCardHTML(s){
+  const levelTag = s.level==="central" ? `<span class="tag central">Central</span>` : `<span class="tag state">${s.state}</span>`;
+  const chips = (s.missed||[]).map(describeMissed).map(m=>`<span class="miss-chip">${m}</span>`).join("");
+  return `
+    <div class="scheme-card">
+      <div class="scheme-top">
+        <div>
+          <div class="tags">${levelTag}<span class="tag category">${s.category}</span></div>
+          <h3 class="scheme-name">${s.name}</h3>
+          <p class="scheme-name-hi">${s.name_hi||""}</p>
+        </div>
+      </div>
+      <div class="miss-list">${chips}</div>
+      <p class="scheme-desc">${s.description}</p>
+      <p class="scheme-meta"><b>Ministry/Dept:</b> ${s.ministry}</p>
+      <a class="scheme-link" href="${s.official_link}" target="_blank" rel="noopener">Official Portal ↗</a>
+    </div>
+  `;
+}
+
+function describeMissed(m){
+  const v = m.value;
+  const money = v !== undefined ? "₹" + Number(v).toLocaleString("en-IN") : "";
+  switch(m.code){
+    case "minAge": return `आयु ${v}+ चाहिए / Min age ${v}`;
+    case "maxAge": return `आयु ${v} से कम चाहिए / Max age ${v}`;
+    case "genders": return `केवल ${v.join("/")} / Only ${v.join("/")}`;
+    case "states": return `केवल ${v.join("/")} के लिए / Only for ${v.join("/")}`;
+    case "maxIncome": return `आय ${money} से कम चाहिए / Income under ${money}`;
+    case "categories": return `श्रेणी ${v.join("/").toUpperCase()} / Needs category ${v.join("/").toUpperCase()}`;
+    case "occupations": return `व्यवसाय: ${v.join("/")} / Needs occupation ${v.join("/")}`;
+    case "residences": return v.includes("rural") ? `ग्रामीण क्षेत्र चाहिए / Needs rural area` : `शहरी क्षेत्र चाहिए / Needs urban area`;
+    case "landOwner": return `कृषि भूमि चाहिए / Needs agri land`;
+    case "bpl": return `BPL कार्ड चाहिए / Needs BPL card`;
+    case "disability": return `दिव्यांग होने पर / Needs disability`;
+    case "widow": return `विधवा होने पर / Needs widow status`;
+    case "noPucca": return `पक्का घर नहीं होना चाहिए / Needs no pucca house`;
+    case "categoriesOrFemale": return `श्रेणी ${v.join("/").toUpperCase()} या महिला / Needs ${v.join("/").toUpperCase()} or female`;
+    case "bplOrCategories": return `BPL या श्रेणी ${v.join("/").toUpperCase()} / Needs BPL or ${v.join("/").toUpperCase()}`;
+    case "ageOrWidowOrDisability": return `आयु ${v}+ या विधवा/दिव्यांग / Age ${v}+ or widow/disabled`;
+    default: return m.code;
+  }
+}
+
+function shareResults(){
+  if(!lastResult) return;
+  const lines = ["योजना सारथी — पात्र योजनाएं / Eligible Schemes:"];
+  if(lastResult.count === 0) lines.push("कोई योजना नहीं मिली / No schemes matched.");
+  lastResult.matches.forEach(m=>{
+    lines.push(`• ${m.name}${m.official_link ? " — " + m.official_link : ""}`);
+  });
+  const text = lines.join("\n");
+  if(navigator.share){
+    navigator.share({ title:"Yojana Saarthi — Eligible Schemes", text }).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text).then(()=>{
+      alert("Result clipboard par copy ho gaya / Results copied to clipboard.");
+    }).catch(()=>{});
+  }
+}
+
+function printResults(){
+  if(!lastResult) return;
+  const head = `
+    <h1>योजना सारथी — Eligible Schemes (पात्र योजनाएं)</h1>
+    <p class="p-sub">Checked on ${new Date().toLocaleDateString("en-IN")} at ${new Date().toLocaleTimeString("en-IN")} — ${lastResult.count} eligible, ${lastResult.nearCount} almost eligible.</p>`;
+  const list = lastResult.matches.length
+    ? lastResult.matches.map(m=>`
+        <div class="p-scheme">
+          <h3>${m.name}${m.name_hi ? " (" + m.name_hi + ")" : ""}</h3>
+          <p>${m.description}</p>
+          <p><b>Ministry:</b> ${m.ministry} &nbsp;•&nbsp; <b>Level:</b> ${m.level==="central"?"Central":m.state}</p>
+          <p>Official portal: <a href="${m.official_link}">${m.official_link}</a></p>
+        </div>`).join("")
+    : `<p>कोई योजना नहीं मिली। / No schemes matched this time.</p>`;
+  const foot = `<p class="p-foot">This is a general guidance tool — always verify eligibility on the official portal before applying.</p>`;
+  document.getElementById("printArea").innerHTML = head + list + foot;
+  window.print();
+}
+
+async function loadAllSchemes(){
+  if(schemesCache) return schemesCache;
+  const res = await fetch("/api/schemes");
+  const data = await res.json();
+  schemesCache = data.schemes;
+  return schemesCache;
+}
+
+function openBrowse(){
+  document.getElementById("browseBackdrop").classList.add("open");
+  loadAllSchemes().then(()=>{
+    populateBrowseFilters();
+    renderBrowse();
+  }).catch(()=>{
+    document.getElementById("browseList").innerHTML = `<div class="empty-state">Schemes load nahi ho paye.</div>`;
+  });
+}
+function closeBrowse(){ document.getElementById("browseBackdrop").classList.remove("open"); }
+
+function populateBrowseFilters(){
+  const catSel = document.getElementById("browseCategory");
+  catSel.innerHTML = `<option value="">Category: All</option>`;
+  const cats = [...new Set(schemesCache.map(s=>s.category))].sort();
+  cats.forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; catSel.appendChild(o); });
+
+  const stSel = document.getElementById("browseState");
+  stSel.innerHTML = `<option value="">State: All</option>`;
+  const states = [...new Set(schemesCache.filter(s=>s.level==="state" && s.state).map(s=>s.state))].sort();
+  states.forEach(s=>{ const o=document.createElement("option"); o.value=s; o.textContent=s; stSel.appendChild(o); });
+}
+
+function renderBrowse(){
+  const q = document.getElementById("browseSearch").value.trim().toLowerCase();
+  const cat = document.getElementById("browseCategory").value;
+  const lvl = document.getElementById("browseLevel").value;
+  const st = document.getElementById("browseState").value;
+  const list = (schemesCache||[]).filter(s=>{
+    if(lvl && s.level !== lvl) return false;
+    if(st && s.state !== st) return false;
+    if(cat && s.category !== cat) return false;
+    if(q && !(s.name.toLowerCase().includes(q) || (s.name_hi||"").toLowerCase().includes(q) || (s.description||"").toLowerCase().includes(q))) return false;
+    return true;
+  });
+  document.getElementById("browseCount").textContent = `${list.length} scheme${list.length===1?"":"s"}`;
+  document.getElementById("browseList").innerHTML = list.length
+    ? list.map(browseCardHTML).join("")
+    : `<div class="empty-state">कोई योजना नहीं मिली / No schemes found.</div>`;
+}
+
+function browseCardHTML(s){
+  const levelTag = s.level==="central" ? `<span class="tag central">Central</span>` : `<span class="tag state">${s.state}</span>`;
+  return `
+    <div class="browse-card">
+      <div class="tags">${levelTag}<span class="tag category">${s.category}</span></div>
+      <h3 class="scheme-name">${s.name}</h3>
+      <p class="scheme-name-hi">${s.name_hi||""}</p>
+      <p class="scheme-desc">${s.description}</p>
+      <p class="scheme-meta"><b>Ministry/Dept:</b> ${s.ministry}</p>
+      <a class="scheme-link" href="${s.official_link}" target="_blank" rel="noopener">Official Portal ↗</a>
+    </div>
+  `;
+}
+
+function openHistory(){
+  document.getElementById("historyBackdrop").classList.add("open");
+  loadHistory();
+}
+function closeHistory(){ document.getElementById("historyBackdrop").classList.remove("open"); }
+
+async function loadHistory(){
+  const listEl = document.getElementById("historyList");
+  listEl.innerHTML = `<div class="empty-state">लोड हो रहा है… / Loading…</div>`;
+  try{
+    const res = await fetch("/api/check/history", { headers:{ "Authorization":"Bearer " + authToken } });
+    if(!res.ok){
+      listEl.innerHTML = `<div class="empty-state">Login sahi nahi lage hai / Session issue. Dobara login karein.</div>`;
+      return;
+    }
+    const data = await res.json();
+    const all = await loadAllSchemes().catch(()=>[]);
+    const idToName = {};
+    all.forEach(s=>{ idToName[s.id] = s.name; });
+
+    if(!data.history || data.history.length === 0){
+      listEl.innerHTML = `<div class="empty-state">Abhi koi history nahi — pehle ek eligibility check karo.<br>No checks yet — run an eligibility check first.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = data.history.map(h=>{
+      const ids = h.matched_scheme_ids || [];
+      const dateStr = new Date(h.created_at).toLocaleString("en-IN", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
+      const chips = ids.length ? ids.map(id=>`<span class="hist-match">${idToName[id] || id}</span>`).join("") : `<span class="hist-none">No matches that time</span>`;
+      return `
+        <div class="hist-card">
+          <div class="hist-top">
+            <span class="hist-date">${dateStr}</span>
+            <button class="hist-rerun" onclick="rerunCheck(this)" data-input='${JSON.stringify(h.input_data).replace(/'/g,"&#39;")}'>↻ Re-run this</button>
+          </div>
+          <p class="scheme-desc">${ids.length} scheme${ids.length===1?"":"s"} matched</p>
+          <div class="hist-matches">${chips}</div>
+        </div>`;
+    }).join("");
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-state">History load nahi hui.</div>`;
+  }
+}
+
+function rerunCheck(btn){
+  const input = JSON.parse(btn.dataset.input);
+  document.getElementById("age").value = input.age ?? "";
+  document.getElementById("income").value = input.income ?? "";
+  document.getElementById("state").value = input.state || document.getElementById("state").options[0].value;
+  document.getElementById("occupation").value = input.occupation || "farmer";
+  setPill("genderRow", input.gender);
+  setPill("categoryRow", input.category);
+  setPill("residenceRow", input.residence);
+  document.getElementById("landOwner").checked = !!input.landOwner;
+  document.getElementById("bpl").checked = !!input.bpl;
+  document.getElementById("disability").checked = !!input.disability;
+  document.getElementById("widow").checked = !!input.widow;
+  document.getElementById("noPucca").checked = !!input.noPucca;
+  closeHistory();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  runCheck();
+}
+
+/* ---------- Auth Modal ---------- */
+function openModal(mode){
+  authMode = mode;
+  document.getElementById("modalBackdrop").classList.add("open");
+  updateModalMode();
+}
+function closeModal(){
+  document.getElementById("modalBackdrop").classList.remove("open");
+  document.getElementById("authMsg").textContent = "";
+}
+function toggleAuthMode(){
+  authMode = authMode === "login" ? "register" : "login";
+  updateModalMode();
+}
+function updateModalMode(){
+  const isRegister = authMode === "register";
+  document.getElementById("modalTitle").textContent = isRegister ? "Register" : "Login";
+  document.getElementById("regName").style.display = isRegister ? "block" : "none";
+  document.getElementById("authSubmitBtn").textContent = isRegister ? "Register" : "Login";
+  document.getElementById("modalSwitch").textContent = isRegister ? "Already have an account? Login" : "Don't have an account? Register";
+  document.getElementById("authMsg").textContent = "";
+}
+
+async function submitAuth(){
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const name = document.getElementById("regName").value.trim();
+  const msg = document.getElementById("authMsg");
+
+  const endpoint = authMode === "register" ? "/api/auth/register" : "/api/auth/login";
+  const body = authMode === "register" ? { name, email, password } : { email, password };
+
+  try{
+    const res = await fetch(endpoint, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) });
+    const data = await res.json();
+    if(!res.ok){ msg.textContent = data.error || "Something went wrong."; return; }
+
+    authToken = data.token;
+    localStorage.setItem("ys_token", authToken);
+    localStorage.setItem("ys_user", JSON.stringify(data.user));
+    closeModal();
+    renderAuthBox();
+  }catch(e){
+    msg.textContent = "Server se connect nahi ho paya.";
+  }
+}
+
+function logout(){
+  authToken = null;
+  localStorage.removeItem("ys_token");
+  localStorage.removeItem("ys_user");
+  renderAuthBox();
+}
+
+function renderAuthBox(){
+  const box = document.getElementById("authBox");
+  if(authToken){
+    const user = JSON.parse(localStorage.getItem("ys_user") || "{}");
+    box.innerHTML = `<span class="userchip">Hi, ${user.name || "User"}</span><button onclick="openHistory()">My History</button><button onclick="logout()">Logout</button>`;
+  } else {
+    box.innerHTML = `<button onclick="openModal('login')">Login</button><button onclick="openModal('register')">Register</button>`;
+  }
+}
+
+populateStates();
+setupPills("genderRow","gender");
+setupPills("categoryRow","category");
+setupPills("residenceRow","residence");
+loadSchemeCount();
+renderAuthBox();
+</script>
+
+</body>
+</html>
