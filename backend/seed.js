@@ -109,10 +109,16 @@ async function seed() {
     );
   }
   console.log("Seed complete! Schemes in database:", schemes.length);
-  await pool.end();
+  return schemes.length;
 }
 
-seed().catch((err) => {
-  console.error("Seeding failed:", err);
-  process.exit(1);
-});
+if (require.main === module) {
+  seed()
+    .then(() => pool.end())
+    .catch((err) => {
+      console.error("Seeding failed:", err);
+      process.exit(1);
+    });
+}
+
+module.exports = seed;

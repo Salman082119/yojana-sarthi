@@ -7,6 +7,7 @@ const path = require("path");
 const authRoutes = require("./routes/auth");
 const schemesRoutes = require("./routes/schemes");
 const checkRoutes = require("./routes/check");
+const seed = require("./seed");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,17 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
-app.listen(PORT, () => {
-  console.log(`Yojana Saarthi server running on port ${PORT}`);
-});
+// Auto-seed schemes on startup so new/updated schemes are always in the DB
+// without manually running `npm run seed`. Idempotent (upserts by id).
+async function start() {
+  try {
+    await seed();
+  } catch (err) {
+    console.error("Auto-seed warning (continuing anyway):", err.message);
+  }
+  app.listen(PORT, () => {
+    console.log(`Yojana Saarthi server running on port ${PORT}`);
+  });
+}
+
+start();
