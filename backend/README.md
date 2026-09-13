@@ -13,7 +13,7 @@ backend/
   server.js          - main app (serves API + frontend)
   db.js              - database connection
   schema.sql          - table definitions
-  seed.js             - loads the 49 schemes into your database
+  seed.js             - loads the 64 schemes into your database
   routes/
     auth.js           - register/login (JWT, rate-limited)
     schemes.js         - list schemes
@@ -57,7 +57,7 @@ backend/
    ```
    npm run seed
    ```
-   You should see "Seed complete! Schemes in database: 49"
+   You should see "Seed complete! Schemes in database: 64"
 6. Start the server:
    ```
    npm start
