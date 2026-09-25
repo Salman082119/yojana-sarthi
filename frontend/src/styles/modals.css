@@ -1,0 +1,150 @@
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal {
+  background: var(--paper);
+  border-radius: 6px;
+  padding: 28px;
+  width: 340px;
+  max-width: 90vw;
+  position: relative;
+}
+
+.modal h3 {
+  margin: 0 0 16px;
+  color: var(--navy);
+}
+
+.modal input {
+  width: 100%;
+  padding: 9px 10px;
+  margin-bottom: 12px;
+  border: 1px solid #a89f83;
+  border-radius: 3px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.modal select {
+  width: 100%;
+  padding: 9px 10px;
+  margin-bottom: 12px;
+  border: 1px solid #a89f83;
+  border-radius: 3px;
+  font-size: 14px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.modal .msg {
+  font-size: 13px;
+  color: var(--seal-red);
+  min-height: 18px;
+  margin-bottom: 6px;
+}
+
+.modal .msg.success {
+  color: var(--seal-green);
+}
+
+.modal button.primary {
+  width: 100%;
+  padding: 11px;
+  background: var(--seal-red);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal .switch {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.modal .close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--muted);
+}
+
+.modal .forgot-link {
+  text-align: right;
+  font-size: 12.5px;
+  color: var(--seal-red);
+  cursor: pointer;
+  margin: -4px 0 10px;
+}
+
+.modal .forgot-link:hover {
+  text-decoration: underline;
+}
+
+/* Bigger modals for browse & history */
+.modal.large {
+  position: relative;
+  width: min(780px, 95vw);
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-body {
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* Browse controls */
+.browse-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 560px) {
+  .browse-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.browse-controls input,
+.browse-controls select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #a89f83;
+  border-radius: 3px;
+  font-size: 13px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.browse-count {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+  margin: 0 0 12px;
+}
+
+.browse-list {
+  display: grid;
+  gap: 14px;
+}

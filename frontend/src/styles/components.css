@@ -1,0 +1,485 @@
+.results-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.results-head h2 {
+  color: var(--cream);
+  font-size: 24px;
+  margin: 0;
+}
+
+.results-count {
+  color: var(--saffron);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 14px;
+}
+
+.results-sub {
+  color: #a79c7d;
+  font-size: 13.5px;
+  margin: 0 0 22px;
+}
+
+.empty-state {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 40px 24px;
+  text-align: center;
+  color: #c9bfa0;
+}
+
+.scheme-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.scheme-card {
+  background: var(--card);
+  border-radius: 5px;
+  padding: 20px 22px;
+  position: relative;
+  border: 1px solid var(--paper-line);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.scheme-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.scheme-name {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--navy);
+  margin: 0 0 4px;
+}
+
+.scheme-top .scheme-name {
+  margin-top: 8px;
+}
+
+.scheme-name-hi {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.tag {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.tag.central {
+  background: #e4d9bd;
+  color: var(--navy);
+}
+
+.tag.state {
+  background: #dbe6df;
+  color: var(--seal-green);
+}
+
+.tag.category {
+  background: #eee1cf;
+  color: var(--saffron);
+}
+
+.scheme-desc {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #3a3730;
+  margin: 0 0 12px;
+}
+
+.scheme-meta {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.scheme-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--seal-red);
+  text-decoration: none;
+  border-bottom: 1px solid var(--seal-red);
+}
+
+.stamp {
+  flex-shrink: 0;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 3px solid var(--seal-red);
+  color: var(--seal-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transform: rotate(-11deg);
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 700;
+  font-size: 11.5px;
+  line-height: 1.3;
+  position: relative;
+  mix-blend-mode: multiply;
+  opacity: 0.92;
+}
+
+.stamp::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--seal-red);
+  border-radius: 50%;
+}
+
+.stamp span {
+  position: relative;
+  z-index: 1;
+}
+
+/* Near-match section */
+.near-area {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.18);
+}
+
+.near-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.near-head h3 {
+  color: var(--cream);
+  font-size: 18px;
+  margin: 0;
+}
+
+.near-count {
+  color: #7fb67f;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+}
+
+.near-sub {
+  color: #a79c7d;
+  font-size: 12.5px;
+  margin: 0 0 16px;
+}
+
+.miss-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0 10px;
+}
+
+.miss-chip {
+  background: #f3e3c3;
+  color: #8a5a12;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid #e0c896;
+}
+
+/* Result action buttons */
+.result-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.result-actions button {
+  background: transparent;
+  border: 1px solid var(--saffron);
+  color: var(--saffron);
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.result-actions button:hover {
+  background: rgba(196, 106, 33, 0.15);
+}
+
+.result-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* v3 additions: match chips, track buttons, docs/steps */
+.match-chip {
+  background: var(--seal-green);
+  color: #fff;
+  border-radius: 12px;
+  padding: 3px 9px;
+  font-weight: 700;
+  font-size: 11px;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.track-btn {
+  background: var(--navy);
+  color: var(--cream);
+  border: none;
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.track-btn:hover {
+  background: var(--navy-2);
+}
+
+.track-btn.tracked {
+  background: var(--seal-green);
+}
+
+.scheme-dets {
+  margin-top: 10px;
+  border-top: 1px dashed var(--paper-line);
+  padding-top: 8px;
+}
+
+.scheme-dets summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--navy);
+  padding: 3px 0;
+}
+
+.scheme-dets .dets-list {
+  margin: 6px 0 2px;
+  padding-left: 20px;
+  font-size: 12.5px;
+  color: #4a463d;
+  line-height: 1.6;
+}
+
+/* History cards */
+.hist-card {
+  background: var(--card);
+  border: 1px solid var(--paper-line);
+  border-radius: 5px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.hist-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.hist-date {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.hist-matches {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 6px 0 10px;
+}
+
+.hist-match {
+  font-size: 12px;
+  background: #eef0e4;
+  border: 1px solid var(--paper-line);
+  border-radius: 12px;
+  padding: 4px 10px;
+  color: var(--navy);
+}
+
+.hist-none {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.hist-rerun {
+  background: var(--navy);
+  color: var(--cream);
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hist-rerun:hover {
+  background: var(--navy-2);
+}
+
+/* Browse cards */
+.browse-card {
+  background: var(--card);
+  border: 1px solid var(--paper-line);
+  border-radius: 5px;
+  padding: 16px 18px;
+}
+
+.browse-card .scheme-name {
+  font-size: 16px;
+  margin: 0 0 2px;
+}
+
+.browse-card .scheme-desc {
+  font-size: 13px;
+  margin: 6px 0 8px;
+}
+
+.browse-card .scheme-meta {
+  font-size: 11.5px;
+}
+
+/* Application status */
+.app-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.app-status.saved {
+  background: #e8e4d6;
+  color: #6b6555;
+}
+
+.app-status.applied {
+  background: #dbe6df;
+  color: var(--seal-green);
+}
+
+.app-status.documents_pending {
+  background: #efe3cf;
+  color: #c46a21;
+}
+
+.app-status.approved {
+  background: #d6e6f0;
+  color: #1a4c6b;
+}
+
+.app-status.rejected {
+  background: #f0d6d6;
+  color: #a32638;
+}
+
+.app-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.app-filters select,
+.app-filters .btn {
+  width: auto;
+  margin: 0;
+}
+
+.btn {
+  background: var(--navy);
+  color: var(--cream);
+  border: none;
+  border-radius: 16px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn:hover {
+  background: var(--navy-2);
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px solid var(--navy);
+  color: var(--navy);
+}
+
+.btn.danger {
+  background: #a32638;
+  color: #fff;
+}
+
+.app-card {
+  background: var(--card);
+  border: 1px solid var(--paper-line);
+  border-radius: 5px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.app-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.app-actions select {
+  padding: 6px 8px;
+  border: 1px solid #a89f83;
+  border-radius: 3px;
+  font-size: 12.5px;
+  background: #fff;
+}
+
+.app-notes {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-style: italic;
+  margin: 6px 0 0;
+}

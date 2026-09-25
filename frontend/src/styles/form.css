@@ -1,0 +1,110 @@
+.ledger {
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-radius: 4px;
+  padding: 26px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+}
+
+.ledger h2 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  color: var(--navy);
+}
+
+.ledger .sub {
+  margin: 0 0 22px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--navy);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.field input[type="number"],
+.field input[type="text"],
+.field select {
+  width: 100%;
+  border: none;
+  border-bottom: 1.5px solid #a89f83;
+  background: transparent;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 15px;
+  padding: 6px 4px;
+  color: var(--ink);
+  outline: none;
+}
+
+.field input:focus,
+.field select:focus {
+  border-bottom-color: var(--seal-red);
+}
+
+.radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pill {
+  border: 1.4px solid #a89f83;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pill.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--cream);
+}
+
+.check-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.check-inline input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--seal-red);
+}
+
+.submit-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 3px;
+  background: var(--seal-red);
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.submit-btn:hover {
+  background: #8a1f2f;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

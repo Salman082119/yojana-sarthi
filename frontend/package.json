@@ -1,0 +1,26 @@
+{
+  "name": "yojana-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "oxlint -c .oxlintrc.json",
+    "format": "prettier --write \"**/*.{js,jsx,css,json,html}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,css,json,html}\"",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "prettier": "^3.9.6",
+    "vite": "^8.3.0"
+  }
+}
