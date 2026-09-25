@@ -16,7 +16,7 @@ function requireAuth(req, res, next) {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = payload.userId;
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: "Session expired or invalid. Please log in again." });
   }
 }
@@ -31,7 +31,7 @@ function optionalAuth(req, res, next) {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
       req.userId = payload.userId;
-    } catch (err) {
+    } catch {
       // ignore invalid token for optional auth
     }
   }

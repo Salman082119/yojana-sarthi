@@ -81,10 +81,10 @@ router.patch("/:schemeId", requireAuth, async (req, res) => {
 // DELETE /api/applications/:schemeId - remove a tracked scheme
 router.delete("/:schemeId", requireAuth, async (req, res) => {
   try {
-    await pool.query(
-      "DELETE FROM applications WHERE user_id = $1 AND scheme_id = $2",
-      [req.userId, req.params.schemeId]
-    );
+    await pool.query("DELETE FROM applications WHERE user_id = $1 AND scheme_id = $2", [
+      req.userId,
+      req.params.schemeId,
+    ]);
     res.json({ ok: true });
   } catch (err) {
     console.error(err);

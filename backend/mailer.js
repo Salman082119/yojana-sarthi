@@ -11,7 +11,10 @@ const APP_URL = process.env.APP_URL || "http://localhost:3000";
 function buildArticle(title, html) {
   return {
     subject: title,
-    text: html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
+    text: html
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
     html,
   };
 }
@@ -22,8 +25,8 @@ function sendArticle(toEmail, title, html) {
     // Dev mode: print the link so the flow works without an email provider.
     const devHint = html.match(/href="([^"]+)"/);
     console.log(
-      `[DEV] Email to ${toEmail} — subject: "${article.subject}"`
-      + (devHint ? `\n[DEV] Open this link: ${devHint[1]}` : "")
+      `[DEV] Email to ${toEmail} — subject: "${article.subject}"` +
+        (devHint ? `\n[DEV] Open this link: ${devHint[1]}` : "")
     );
     return Promise.resolve({ ok: true, dev: true });
   }

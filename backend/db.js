@@ -7,9 +7,10 @@ require("dotenv").config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes("localhost")
-    ? false
-    : { rejectUnauthorized: false }, // needed for most free Postgres hosts (Neon, Render, etc.)
+  ssl:
+    process.env.DATABASE_URL && process.env.DATABASE_URL.includes("localhost")
+      ? false
+      : { rejectUnauthorized: false }, // needed for most free Postgres hosts (Neon, Render, etc.)
 });
 
 pool.on("error", (err) => {

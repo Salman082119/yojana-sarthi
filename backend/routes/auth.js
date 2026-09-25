@@ -10,13 +10,17 @@ const { sendPasswordReset, sendVerifyEmail } = require("../mailer");
 const router = express.Router();
 
 // Slow down repeated login/register attempts (basic brute-force protection)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Too many attempts. Please wait 15 minutes and try again." },
-});
+// Disabled when RATE_LIMIT_DISABLED=1 so integration tests don't trip it.
+const authLimiter =
+  process.env.RATE_LIMIT_DISABLED === "1"
+    ? (req, res, next) => next()
+    : rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        limit: 10,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { error: "Too many attempts. Please wait 15 minutes and try again." },
+      });
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .split(",")
@@ -53,8 +57,14 @@ router.post("/register", authLimiter, async (req, res) => {
   if (!name || !email || !password) {
     return res.status(400).json({ error: "Name, email and password are all required." });
   }
-  if (password.length < 6) {
-    return res.status(400).json({ error: "Password must be at least 6 characters." });
+  if (typeof name !== "string" || name.trim().length < 2 || name.length > 100) {
+    return res.status(400).json({ error: "Name must be 2-100 characters." });
+  }
+  if (typeof email !== "string" || email.length > 255) {
+    return res.status(400).json({ error: "Invalid email address." });
+  }
+  if (typeof password !== "string" || password.length < 6 || password.length > 128) {
+    return res.status(400).json({ error: "Password must be 6-128 characters." });
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: "Please enter a valid email address." });
@@ -79,7 +89,9 @@ router.post("/register", authLimiter, async (req, res) => {
     const vtoken = await createToken(user.id, "email_verify");
     sendVerifyEmail(user.email, vtoken).catch((e) => console.error("Verify email failed:", e.message));
 
-    res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    res
+      .status(201)
+      .json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong while creating your account." });
@@ -92,6 +104,14 @@ router.post("/login", authLimiter, async (req, res) => {
 
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required." });
+  }
+  if (
+    typeof email !== "string" ||
+    email.length > 255 ||
+    typeof password !== "string" ||
+    password.length > 128
+  ) {
+    return res.status(400).json({ error: "Invalid login data." });
   }
 
   try {
@@ -124,7 +144,7 @@ router.post("/login", authLimiter, async (req, res) => {
 // POST /api/auth/forgot - request a password reset link
 router.post("/forgot", authLimiter, async (req, res) => {
   const email = (req.body.email || "").toLowerCase();
-  if (!email) return res.status(400).json({ error: "Email is required." });
+  if (!email || email.length > 255) return res.status(400).json({ error: "Email is required." });
 
   try {
     const result = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
@@ -144,8 +164,11 @@ router.post("/forgot", authLimiter, async (req, res) => {
 // POST /api/auth/reset - set a new password using a reset token
 router.post("/reset", authLimiter, async (req, res) => {
   const { token, password } = req.body;
-  if (!token || !validTokenPair(token)) return res.status(400).json({ error: "Invalid or expired reset link." });
-  if (!password || password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters." });
+  if (!token || !validTokenPair(token))
+    return res.status(400).json({ error: "Invalid or expired reset link." });
+  if (!password || typeof password !== "string" || password.length < 6 || password.length > 128) {
+    return res.status(400).json({ error: "Password must be 6-128 characters." });
+  }
 
   try {
     const hash = crypto.createHash("sha256").update(token).digest("hex");
@@ -160,7 +183,10 @@ router.post("/reset", authLimiter, async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [passwordHash, result.rows[0].user_id]);
+    await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [
+      passwordHash,
+      result.rows[0].user_id,
+    ]);
     await pool.query("UPDATE tokens SET used_at = NOW() WHERE id = $1", [result.rows[0].id]);
 
     res.json({ ok: true });
@@ -173,7 +199,8 @@ router.post("/reset", authLimiter, async (req, res) => {
 // POST /api/auth/verify - confirm email address with a verification token
 router.post("/verify", async (req, res) => {
   const token = (req.body.token || "").trim();
-  if (!token || !validTokenPair(token)) return res.status(400).json({ error: "Invalid or expired verification link." });
+  if (!token || !validTokenPair(token))
+    return res.status(400).json({ error: "Invalid or expired verification link." });
 
   try {
     const hash = crypto.createHash("sha256").update(token).digest("hex");
