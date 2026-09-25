@@ -59,3 +59,103 @@ jobs:
 
       - run: npm ci --prefix frontend
       - run: npm run build
+
+  docker:
+    name: Docker build & smoke test
+    runs-on: ubuntu-latest
+
+    # A throwaway Postgres so the image is exercised against a real database.
+    # The app itself runs inside the image, not on the runner.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-pass
+          POSTGRES_DB: yojana
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d yojana"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: yojana-sarthi:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run image
+        run: |
+          # The database lives on the runner, not inside this container, so
+          # `localhost` would point at the container itself. `sslmode=disable`
+          # is what tells the pg pool not to demand TLS from a local Postgres.
+          docker run -d --name ys-ci -p 3000:3000 \
+            --add-host=host.docker.internal:host-gateway \
+            -e DATABASE_URL="postgresql://postgres:ci-pass@host.docker.internal:5432/yojana?sslmode=disable" \
+            -e JWT_SECRET="ci-docker-secret-not-used-in-production" \
+            yojana-sarthi:ci
+
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          # The server seeds every scheme before it starts listening, so give it
+          # a window to come up rather than assuming it is instant.
+          for i in $(seq 1 45); do
+            if curl -fsS http://localhost:3000/health >/dev/null 2>&1; then
+              echo "container answered /health on attempt $i"
+              break
+            fi
+            if [ "$i" -eq 45 ]; then
+              echo "::error::container never became healthy"
+              docker logs ys-ci
+              exit 1
+            fi
+            sleep 2
+          done
+
+          echo "--- GET /health ---"
+          curl -fsS http://localhost:3000/health
+
+          echo ""
+          echo "--- GET /api/schemes ---"
+          count=$(curl -fsS http://localhost:3000/api/schemes | jq '.schemes | length')
+          echo "schemes = $count"
+          if [ "$count" -ne 76 ]; then
+            echo "::error::expected 76 schemes, got $count"
+            exit 1
+          fi
+
+          echo "--- GET / (UI shell) ---"
+          if ! curl -fsS http://localhost:3000/ | grep -qi '<!doctype html'; then
+            echo "::error::the built frontend was not served"
+            exit 1
+          fi
+          echo "UI shell served"
+
+          echo "--- unmatched /api path ---"
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/does-not-exist)
+          if [ "$code" != "404" ]; then
+            echo "::error::expected 404 for an unknown API path, got $code"
+            exit 1
+          fi
+          echo "unknown API path -> 404"
+
+      - name: Container logs
+        if: always()
+        run: docker logs ys-ci
+
+      - name: Clean up
+        if: always()
+        run: docker rm -f ys-ci || true

@@ -1,0 +1,21 @@
+# Local development against the same environment the app uses in production.
+#
+#   docker compose up -d --build     start the app on http://localhost:3000
+#   docker compose logs -f app        follow the logs
+#   docker compose down               stop and remove the container
+#
+# Credentials come straight from backend/.env, which is git-ignored, so there is
+# nothing to duplicate here. That file is read at *runtime* by compose and is
+# excluded from the image by .dockerignore — no secret is ever baked in.
+
+services:
+  app:
+    build:
+      # The build context must be the repo root: the image needs backend/ and
+      # frontend/ together to build the Vite bundle.
+      context: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped

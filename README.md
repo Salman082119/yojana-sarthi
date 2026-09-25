@@ -16,8 +16,9 @@ deployed as a single process from one repo.
 ├── server.js            Root entry point (Render/Docker start from here)
 ├── package.json          Convenience scripts that forward to ./backend and ./frontend
 ├── Dockerfile            Multi-stage image: builds the frontend, ships prod deps only
+├── docker-compose.yml    Local run of that image, configured from backend/.env
 ├── render.yaml           Render blueprint (builds the frontend for you)
-├── .github/workflows/    CI — lint, format, 124 backend tests, frontend build
+├── .github/workflows/    CI — lint, format, 124 backend tests, frontend build, docker smoke test
 │
 ├── frontend/            React 19 + Vite single-page app
 │   ├── src/components/   Form, results, cards, modals
@@ -96,6 +97,24 @@ The server creates its tables and upserts all 76 schemes on boot, so
 npm run dev        # terminal 1 — API on :3000
 npm run dev:client # terminal 2 — Vite on :5173, proxies /api to :3000
 ```
+
+**Or skip Node entirely and use Docker**
+
+If `backend/.env` is already filled in, Compose builds the image and starts the
+app against the same database — no local `npm install`, no `npm run build`:
+
+```bash
+docker compose up -d --build   # http://localhost:3000
+docker compose logs -f app
+docker compose down
+```
+
+Compose reads `backend/.env` directly, so there is nothing to configure twice.
+The image never contains it: `.dockerignore` excludes `**/.env` from the build
+context, and Compose only injects the file at runtime.
+
+Note that this writes to the same database you use with `npm start`, so scheme
+check history and test accounts land in your real dev database.
 
 ---
 
@@ -206,9 +225,18 @@ npm run lint
 npm run format:check
 ```
 
-`.github/workflows/ci.yml` runs three jobs on every push and pull request to
-`main`: **lint & format**, **backend tests**, and **frontend build**. Tests stub
-the database, so no `DATABASE_URL` is needed in CI.
+`.github/workflows/ci.yml` runs four jobs on every push and pull request to
+`main`: **lint & format**, **backend tests**, **frontend build**, and **docker
+build & smoke test**.
+
+The first three need no configuration — tests stub the database, so no
+`DATABASE_URL` is required. The docker job is the one that would otherwise rot
+silently: it builds the real image, then starts it against a throwaway Postgres
+service and asserts the container actually works — `/health` responds,
+`/api/schemes` returns all 76 schemes, the built UI is served, and an unknown
+`/api` path still 404s as JSON. A broken `Dockerfile`, a bad `.dockerignore`
+entry, or a frontend build that only fails inside a container all fail CI here
+instead of at deploy time.
 
 ---
 
