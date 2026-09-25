@@ -18,7 +18,7 @@ deployed as a single process from one repo.
 ├── Dockerfile            Multi-stage image: builds the frontend, ships prod deps only
 ├── docker-compose.yml    Local run of that image, configured from backend/.env
 ├── render.yaml           Render blueprint (builds the frontend for you)
-├── .github/workflows/    CI — lint, format, 124 backend tests, frontend build, docker smoke test
+├── .github/workflows/    CI — lint, format, 128 backend tests, frontend build, docker smoke test
 │
 ├── frontend/            React 19 + Vite single-page app
 │   ├── src/components/   Form, results, cards, modals
@@ -129,7 +129,7 @@ Run from the repo root:
 | `npm run dev`           | Same as `start`                                   |
 | `npm run dev:client`    | Vite dev server on :5173                          |
 | `npm run build`         | Builds `frontend/dist`                            |
-| `npm test`              | 124 backend tests (Vitest + Supertest)            |
+| `npm test`              | 128 backend tests (Vitest + Supertest)            |
 | `npm run lint`          | ESLint (backend) + Oxlint (frontend)              |
 | `npm run format`        | Prettier over both packages                       |
 | `npm run format:check`  | Same, without writing — this is what CI runs      |
@@ -166,7 +166,8 @@ All routes are prefixed `/api`. Authenticated routes take
 
 | Method   | Route                        | Auth   | Purpose                            |
 | -------- | ---------------------------- | ------ | ---------------------------------- |
-| `GET`    | `/health`                    | –      | Liveness probe                     |
+| `GET`    | `/health`                    | –      | Liveness probe (process is up)     |
+| `GET`    | `/ready`                     | –      | Readiness probe (database answers) |
 | `POST`   | `/api/auth/register`         | –      | Create an account, returns a JWT   |
 | `POST`   | `/api/auth/login`            | –      | Returns a JWT                      |
 | `POST`   | `/api/auth/forgot`           | –      | Emails a reset link                |
@@ -220,7 +221,7 @@ The same image works on Railway, Fly.io or any Docker host.
 ## Tests and CI
 
 ```bash
-npm test            # 124 tests across 7 files
+npm test            # 128 tests across 8 files
 npm run lint
 npm run format:check
 ```
@@ -232,11 +233,27 @@ build & smoke test**.
 The first three need no configuration — tests stub the database, so no
 `DATABASE_URL` is required. The docker job is the one that would otherwise rot
 silently: it builds the real image, then starts it against a throwaway Postgres
-service and asserts the container actually works — `/health` responds,
-`/api/schemes` returns all 76 schemes, the built UI is served, and an unknown
-`/api` path still 404s as JSON. A broken `Dockerfile`, a bad `.dockerignore`
-entry, or a frontend build that only fails inside a container all fail CI here
-instead of at deploy time.
+service and asserts the container actually works — `/ready` confirms the
+container can reach its database, `/api/schemes` returns all 76 schemes, the
+built UI is served, and an unknown `/api` path still 404s as JSON. A broken
+`Dockerfile`, a bad `.dockerignore` entry, or a frontend build that only fails
+inside a container all fail CI here instead of at deploy time.
+
+## Health checks
+
+`/health` and `/ready` answer different questions on purpose:
+
+- **`/health`** — is the process alive? It never touches the database, so it
+  stays green even when `DATABASE_URL` is wrong. Use it as a liveness probe.
+- **`/ready`** — can the app actually serve? It runs `SELECT 1` and returns
+  `503` until the database answers. Use it as a readiness probe.
+
+This split exists because startup **swallows seed errors** (one malformed scheme
+should not take the whole API offline), which means a misconfigured
+`DATABASE_URL` still starts a server that answers `/health` with `200` while
+every real route fails. The image `HEALTHCHECK` and the Render blueprint's
+`healthCheckPath` both point at `/ready` for exactly that reason — do not point
+them at `/health` or the misconfiguration stays invisible.
 
 ---
 

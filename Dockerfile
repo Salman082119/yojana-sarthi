@@ -27,4 +27,11 @@ COPY backend ./backend
 COPY --from=build /app/frontend/dist ./frontend/dist
 
 EXPOSE 3000
+
+# /ready, not /health: the server starts and answers /health even when it cannot
+# reach its database, so only the readiness probe tells you the app is usable.
+# The seed runs before the port opens, hence the generous start period.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD wget -q -O - http://127.0.0.1:3000/ready >/dev/null 2>&1 || exit 1
+
 CMD ["node", "server.js"]

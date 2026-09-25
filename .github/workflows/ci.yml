@@ -129,6 +129,14 @@ jobs:
           curl -fsS http://localhost:3000/health
 
           echo ""
+          echo "--- GET /ready (real database check) ---"
+          if ! curl -fsS http://localhost:3000/ready; then
+            echo "::error::/ready did not return 200 — the container cannot reach its database"
+            docker logs ys-ci
+            exit 1
+          fi
+
+          echo ""
           echo "--- GET /api/schemes ---"
           count=$(curl -fsS http://localhost:3000/api/schemes | jq '.schemes | length')
           echo "schemes = $count"

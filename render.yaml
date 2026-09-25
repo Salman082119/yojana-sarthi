@@ -8,6 +8,9 @@ services:
     plan: free
     buildCommand: npm ci --prefix backend && npm ci --prefix frontend && npm run build
     startCommand: npm start
+    # Readiness, not liveness: seed errors are logged and swallowed, so the app
+    # answers /health even with a broken DATABASE_URL.
+    healthCheckPath: /ready
     envVars:
       - key: NODE_ENV
         value: production

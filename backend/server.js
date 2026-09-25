@@ -11,6 +11,7 @@ const schemesRoutes = require("./routes/schemes");
 const checkRoutes = require("./routes/check");
 const applicationsRoutes = require("./routes/applications");
 const adminRoutes = require("./routes/admin");
+const healthRoutes = require("./routes/health");
 const seed = require("./seed");
 
 const app = express();
@@ -51,7 +52,8 @@ app.use("/api/admin", adminRoutes);
 // JSON so a client never receives the HTML shell for an API call.
 app.use("/api", (req, res) => res.status(404).json({ error: "Not found" }));
 
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+// Liveness and readiness probes
+app.use(healthRoutes);
 
 // The frontend is a separate Vite app. It must be built (`npm run build` from
 // the repo root) before the server can serve it; there is no legacy fallback.
