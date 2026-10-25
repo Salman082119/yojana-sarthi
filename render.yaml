@@ -6,7 +6,7 @@ services:
     name: yojana-sarthi
     runtime: node
     plan: free
-    buildCommand: npm ci && npm run build
+    buildCommand: NPM_CONFIG_PRODUCTION=false npm ci && npm run build
     startCommand: npm start
     # Readiness, not liveness: seed errors are logged and swallowed, so the app
     # answers /health even with a broken DATABASE_URL.
@@ -14,6 +14,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NPM_CONFIG_PRODUCTION
+        value: false
       - key: PORT
         value: 3000
       - key: DATABASE_URL
