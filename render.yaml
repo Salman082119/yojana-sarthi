@@ -6,7 +6,7 @@ services:
     name: yojana-sarthi
     runtime: node
     plan: free
-    buildCommand: npm ci --prefix backend && npm ci --prefix frontend && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     # Readiness, not liveness: seed errors are logged and swallowed, so the app
     # answers /health even with a broken DATABASE_URL.
