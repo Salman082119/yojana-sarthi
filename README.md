@@ -257,6 +257,84 @@ them at `/health` or the misconfiguration stays invisible.
 
 ---
 
+## Rotating the database password
+
+The app only ever reads the connection string from `process.env.DATABASE_URL`, so
+rotating the Neon password means updating exactly two places and nothing else —
+there is no credential baked into the image, and the frontend talks to `/api`
+over relative paths, so it has no idea a database exists.
+
+| Where                          | How it gets the value                     |
+| ------------------------------ | ----------------------------------------- |
+| Local dev / Docker             | `backend/.env` (read at runtime by Compose) |
+| Render                         | Dashboard env var — `render.yaml` uses `sync: false` |
+
+CI is unaffected: `.github/workflows/ci.yml` starts its own throwaway Postgres
+service with its own password.
+
+**1. Reset the role password in Neon**
+
+Open the project's **Dashboard** and click **Connect**. Inside the modal, open
+the **role** menu and choose **Reset password**, then **Reset**. The new password
+is shown once — copy it, then copy the connection string from the same modal.
+
+Doing it from the Connect modal is the shortest path because the reset and the
+copy happen in one place, and the string you copy is guaranteed to match the
+password. To do them separately, the sidebar path is **BRANCH** selector →
+**Postgres database** → **Roles** → the role's **⋯** menu → **Reset password**.
+Neon moved *Roles* and *Databases* under one collapsible **Postgres database**
+item in August 2026, so older guides that say "the *Roles & Databases* tab" no
+longer describe the Console.
+
+**Copy the whole string, do not retype it.** Only the password segment changes —
+the host and database name stay the same — but retyping a generated password can
+drop a character that the URL had encoded. Keep `?sslmode=require` at the end:
+`db.js` disables TLS when it sees `sslmode=disable` or a `localhost` host, and
+Neon needs TLS.
+
+The reset is branch-scoped to whichever branch the **BRANCH** picker is showing.
+Child branches keep the old password until you reset the role on each of them.
+
+**2. Push the new value to Render**
+
+Render → your service → **Environment** → `DATABASE_URL` → paste → **Save**.
+Saving restarts the service by itself; you do not need to redeploy.
+
+**3. Update `backend/.env`** with the same string, and restart whatever you run
+locally. The `pg.Pool` is built when `db.js` is first required, so a running
+`npm start` process keeps its old connections and never notices the change.
+`docker compose up -d` (no rebuild needed) re-reads the file for the container.
+
+**4. Verify with `/ready`, not `/health`**
+
+```bash
+curl -i http://localhost:3000/ready
+curl -i https://<your-app>.onrender.com/ready     # 200 {"status":"ready"}
+```
+
+`/ready` runs `SELECT 1`, so it is the only endpoint that proves the new
+password actually works. `/health` returns `200` on a server that cannot log
+into the database at all, so checking it here tells you nothing. If `/ready`
+gives you `503`, the password in the connection string is the wrong one or has a
+character the URL encoding dropped — compare it against the string from the
+Connect modal rather than retyping it.
+
+**Expect a short outage between steps 1 and 2.** The reset takes effect
+immediately, so every new connection using the old password fails while Render
+is still restarting (its free tier also sleeps after ~15 min idle and takes ~30s
+to wake). Already-open connections survive, so the window is one deploy cycle,
+not data loss. If the Console is slow to hand over the new string, paste it into
+Render the moment you have it — step 3 is the only step you can do while the app
+is already down. For a real service with live traffic, create a second role in
+Neon, roll the new string out everywhere, then reset the old role's password to
+actually invalidate the leaked credential.
+
+Recovering from a mistake is just repeating the runbook: reset the password
+again in Neon, copy the new string, update both places. Nothing in the database
+is touched by a rotation.
+
+---
+
 ## Accuracy note
 
 Scheme amounts, income limits and eligibility rules are indicative and reflect
