@@ -1,15 +1,11 @@
-# Render Blueprint â€” deploy Yojana Saarthi on Render's free tier
-# Push this repo to GitHub, connect it in Render, and it will use this file.
-# (Alternative to the manual steps in README.)
+# Render Blueprint — deploy Yojana Saarthi on Render's free tier
 services:
   - type: web
     name: yojana-sarthi
     runtime: node
     plan: free
-    buildCommand: NPM_CONFIG_PRODUCTION=false npm ci && npm run build
+    buildCommand: NPM_CONFIG_PRODUCTION=false npm ci --include=dev && npm run build
     startCommand: npm start
-    # Readiness, not liveness: seed errors are logged and swallowed, so the app
-    # answers /health even with a broken DATABASE_URL.
     healthCheckPath: /ready
     envVars:
       - key: NODE_ENV
