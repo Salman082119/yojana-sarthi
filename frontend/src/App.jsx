@@ -30,6 +30,13 @@ const EMPTY_FORM = {
   noPucca: false,
 };
 
+// Email links deep-link with #reset?token=... or #verify?token=..., so the auth
+// modal must open on load even though the user never clicked "Login".
+function opensAuthFromHash() {
+  const hash = window.location.hash || "";
+  return hash.startsWith("#reset?") || hash.startsWith("#verify?");
+}
+
 // The service worker is a progressive enhancement: it only works on a secure
 // origin, so registration is skipped on plain-http LAN addresses.
 function registerServiceWorker() {
@@ -55,8 +62,9 @@ export default function App() {
   const [schemeTotal, setSchemeTotal] = useState("...");
   const [appsCache, setAppsCache] = useState([]);
   const [error, setError] = useState("");
+  const [verifyNote, setVerifyNote] = useState("");
 
-  const authModal = useModal();
+  const authModal = useModal(opensAuthFromHash());
   const browseModal = useModal();
   const historyModal = useModal();
   const applicationsModal = useModal();
@@ -128,6 +136,17 @@ export default function App() {
   function handleLogout() {
     logout();
     setAppsCache([]);
+    setVerifyNote("");
+  }
+
+  async function resendVerification() {
+    setVerifyNote("");
+    try {
+      await apiPost("/api/auth/resend-verification", {});
+      setVerifyNote("Verification link bhej diya. Apna inbox check karein.");
+    } catch (e) {
+      setVerifyNote(e.message || "Link nahi bheja ja saka. Thodi der baad try karein.");
+    }
   }
 
   async function runCheck() {
@@ -270,6 +289,16 @@ export default function App() {
         onAdmin={adminModal.open}
         onLogout={handleLogout}
       />
+
+      {token && user && user.email_verified === false && (
+        <div className="verify-banner">
+          <span>Email abhi verify nahi hua hai. Inbox mein verification link check karein.</span>
+          <button type="button" onClick={resendVerification}>
+            Resend verification link
+          </button>
+          {verifyNote && <span className="verify-note">{verifyNote}</span>}
+        </div>
+      )}
 
       <div className="disclaimer">
         <b>जानकारी हेतु / For information only:</b> यह टूल एक सामान्य मार्गदर्शक है। आवेदन से पहले आधिकारिक

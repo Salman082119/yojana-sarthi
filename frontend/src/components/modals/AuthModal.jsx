@@ -34,11 +34,27 @@ export default function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
     const h = window.location.hash || "";
     if (!h.startsWith(VERIFY_PREFIX)) return;
     const token = new URLSearchParams(h.slice(VERIFY_PREFIX.length)).get("token");
+    const clearHash = () =>
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+
     apiPost("/api/auth/verify", { token })
-      .catch(() => {})
-      .finally(() => {
-        window.history.replaceState(null, "", window.location.pathname + window.location.search);
-      });
+      .then(() => {
+        try {
+          const stored = JSON.parse(localStorage.getItem("ys_user") || "{}");
+          localStorage.setItem("ys_user", JSON.stringify({ ...stored, email_verified: true }));
+        } catch {
+          // ignore malformed storage
+        }
+        window.dispatchEvent(new Event("ys:email-verified"));
+        setMessage({ text: "Email verify ho gaya. Ab login karein.", success: true });
+      })
+      .catch((err) => {
+        setMessage({
+          text: err.message || "Verification link invalid ya expire ho gaya.",
+          success: false,
+        });
+      })
+      .finally(clearHash);
   }, []);
 
   useEffect(() => {
@@ -156,7 +172,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
             <input
               type="password"
               id="newPass"
-              placeholder="New password (min 6 chars)"
+              placeholder="New password (min 8 chars)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -231,8 +247,9 @@ export default function AuthModal({ isOpen, onClose, onLogin, onRegister }) {
               />
               <input
                 type="password"
-                placeholder="Password"
-                autoComplete="current-password"
+                placeholder={mode === "register" ? "Password (min 8 chars)" : "Password"}
+                autoComplete={mode === "register" ? "new-password" : "current-password"}
+                minLength={mode === "register" ? 8 : undefined}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

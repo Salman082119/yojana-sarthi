@@ -14,8 +14,14 @@ export function useAuth() {
         setUserState(e.newValue ? JSON.parse(e.newValue) : {});
       }
     };
+    const handleVerified = () => setUserState(getUser());
+
     window.addEventListener("storage", handleStorageEvent);
-    return () => window.removeEventListener("storage", handleStorageEvent);
+    window.addEventListener("ys:email-verified", handleVerified);
+    return () => {
+      window.removeEventListener("storage", handleStorageEvent);
+      window.removeEventListener("ys:email-verified", handleVerified);
+    };
   }, []);
 
   async function login(email, password) {

@@ -7,14 +7,23 @@
 const express = require("express");
 const pool = require("../db");
 const { optionalAuth, requireAuth } = require("../middleware/auth");
+const { makeLimiter } = require("../middleware/rateLimit");
 const { evaluateAll } = require("../lib/eligibility");
 
 const router = express.Router();
 
+// Each check scans the full schemes table, so keep a single client from
+// hammering it. Generous enough for a person retrying different answers.
+const checkLimiter = makeLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 60,
+  message: "Too many eligibility checks. Please wait a few minutes and try again.",
+});
+
 const cleanNum = (v) => (v === "" || v === undefined || v === null || isNaN(Number(v)) ? null : Number(v));
 
 // POST /api/check
-router.post("/", optionalAuth, async (req, res) => {
+router.post("/", checkLimiter, optionalAuth, async (req, res) => {
   let age = req.body.age ?? null;
   let income = req.body.income ?? null;
   if (age === "" || age === undefined) age = null;

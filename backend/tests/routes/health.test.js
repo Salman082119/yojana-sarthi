@@ -43,12 +43,11 @@ describe("GET /ready", () => {
     expect(mockQuery).toHaveBeenCalledWith("SELECT 1");
   });
 
-  it("reports 503 when the database is unreachable", async () => {
+  it("reports 503 without leaking the driver error", async () => {
     mockQuery.mockRejectedValue(new Error("The server does not support SSL connections"));
     const res = await request(makeApp()).get("/ready");
     expect(res.status).toBe(503);
-    expect(res.body.status).toBe("unavailable");
-    expect(res.body.error).toContain("does not support SSL");
+    expect(res.body).toEqual({ status: "unavailable" });
   });
 
   it("keeps /health green while /ready is red, which is the point", async () => {

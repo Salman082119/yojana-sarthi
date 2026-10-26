@@ -20,7 +20,9 @@ router.get("/ready", async (req, res) => {
     await pool.query("SELECT 1");
     res.json({ status: "ready" });
   } catch (err) {
-    res.status(503).json({ status: "unavailable", error: err.message });
+    // Keep the driver's message in the logs, not in the public response.
+    console.error("Readiness check failed:", err.message);
+    res.status(503).json({ status: "unavailable" });
   }
 });
 

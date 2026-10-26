@@ -9,7 +9,7 @@ server.js          Express app: API routes + static hosting of the built fronten
 db.js              PostgreSQL connection pool
 lib/eligibility.js Scheme matching engine (matches + near-matches)
 routes/            auth, schemes, check, applications, admin
-middleware/auth.js requireAuth / optionalAuth / requireAdmin
+middleware/        requireAuth / optionalAuth + shared rate limiter
 schema.sql         Table definitions
 seed.js            The 76 schemes, upserted on server start
 tests/             Vitest + Supertest

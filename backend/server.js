@@ -13,6 +13,8 @@ const applicationsRoutes = require("./routes/applications");
 const adminRoutes = require("./routes/admin");
 const healthRoutes = require("./routes/health");
 const seed = require("./seed");
+const pool = require("./db");
+const { makeLimiter } = require("./middleware/rateLimit");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,8 +40,46 @@ app.use(
   })
 );
 
-app.use(cors());
+// CORS is limited to the app's own origin plus any extra origins configured in
+// CORS_ORIGINS. Requests without an Origin header (same-origin navigations,
+// curl, server-to-server) are allowed. In development the Vite dev server is
+// added so `npm run dev:client` can talk to the API.
+const allowedOrigins = (() => {
+  const origins = new Set();
+  const add = (value) => {
+    if (!value) return;
+    try {
+      origins.add(new URL(value).origin);
+    } catch {
+      console.warn(`Ignoring malformed origin in CORS config: ${value}`);
+    }
+  };
+
+  add(process.env.APP_URL);
+  (process.env.CORS_ORIGINS || "").split(",").forEach((origin) => add(origin.trim()));
+  if (process.env.NODE_ENV !== "production") {
+    ["http://localhost:5173", "http://localhost:3000"].forEach(add);
+  }
+
+  return origins;
+})();
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      callback(null, !origin || allowedOrigins.has(origin));
+    },
+  })
+);
 app.use(express.json({ limit: "10kb" }));
+
+// Coarse API-wide ceiling; the auth and check routes add tighter limits.
+const apiLimiter = makeLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  message: "Too many requests. Please slow down and try again shortly.",
+});
+app.use("/api", apiLimiter);
 
 // API routes
 app.use("/api/auth", authRoutes);
@@ -100,6 +140,21 @@ app.get("*", (req, res, next) => {
   res.sendFile(path.join(staticDir, "index.html"), (err) => err && next(err));
 });
 
+// One-shot tokens are useless once expired or used; keeping them around only
+// grows the table. A week of grace is plenty for debugging a support case.
+async function cleanupTokens() {
+  try {
+    await pool.query(
+      `DELETE FROM tokens
+       WHERE expires_at < NOW() - INTERVAL '7 days'
+          OR (used_at IS NOT NULL AND used_at < NOW() - INTERVAL '7 days')`
+    );
+  } catch (err) {
+    // Never let housekeeping stop the server from booting.
+    console.error("Token cleanup warning:", err.message);
+  }
+}
+
 // Auto-seed schemes on startup so new/updated schemes are always in the DB
 // without manually running `npm run seed`. Idempotent (upserts by id).
 async function start() {
@@ -108,6 +163,10 @@ async function start() {
   } catch (err) {
     console.error("Auto-seed warning (continuing anyway):", err.message);
   }
+
+  await cleanupTokens();
+  setInterval(cleanupTokens, 24 * 60 * 60 * 1000).unref();
+
   app.listen(PORT, () => {
     console.log(`Yojana Saarthi server running on port ${PORT}`);
     if (hasBuild) {

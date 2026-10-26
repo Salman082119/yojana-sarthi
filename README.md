@@ -18,7 +18,7 @@ deployed as a single process from one repo.
 ├── Dockerfile            Multi-stage image: builds the frontend, ships prod deps only
 ├── docker-compose.yml    Local run of that image, configured from backend/.env
 ├── render.yaml           Render blueprint (builds the frontend for you)
-├── .github/workflows/    CI — lint, format, 128 backend tests, frontend build, docker smoke test
+├── .github/workflows/    CI — lint, format, backend + frontend tests, frontend build, docker smoke test
 │
 ├── frontend/            React 19 + Vite single-page app
 │   ├── src/components/   Form, results, cards, modals
@@ -31,7 +31,7 @@ deployed as a single process from one repo.
     ├── server.js          Serves the API *and* the built frontend from ../frontend/dist
     ├── lib/eligibility.js Matching engine — shared by the API and the tests
     ├── routes/            auth, schemes, check, applications, admin
-    ├── middleware/auth.js requireAuth / optionalAuth / requireAdmin
+    ├── middleware/        requireAuth / optionalAuth + shared rate limiter
     ├── schema.sql         Table definitions
     ├── seed.js            The 76 schemes
     ├── tests/             Vitest + Supertest
@@ -47,7 +47,7 @@ served, and the server says so in the log.
 
 ## Run it locally
 
-**1. Prerequisites** — [Node.js](https://nodejs.org) 20+ and a PostgreSQL
+**1. Prerequisites** — [Node.js](https://nodejs.org) 22+ and a PostgreSQL
 database. The free tier at [neon.tech](https://neon.tech) is enough.
 
 **2. Install**
@@ -73,8 +73,11 @@ Then fill in `backend/.env`:
 | `DATABASE_URL`   | yes      | Neon/Render connection string                                 |
 | `JWT_SECRET`     | yes      | 32+ random chars — `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
 | `PORT`           | no       | Defaults to `3000`                                            |
+| `APP_URL`        | no       | Public URL used in reset/verify emails and as the default CORS origin. Defaults to `http://localhost:3000`; **set it on Render** |
+| `CORS_ORIGINS`   | no       | Extra comma-separated browser origins allowed to call the API |
 | `ADMIN_EMAILS`   | no       | Comma-separated; these accounts get the admin dashboard       |
 | `RESEND_API_KEY` | no       | Without it, reset/verify emails are logged to the console      |
+| `MAIL_FROM`      | no       | Verified Resend sender, e.g. `Yojana Saarthi <no-reply@yourdomain>` |
 
 **4. Build the frontend**
 
@@ -129,7 +132,9 @@ Run from the repo root:
 | `npm run dev`           | Same as `start`                                   |
 | `npm run dev:client`    | Vite dev server on :5173                          |
 | `npm run build`         | Builds `frontend/dist`                            |
-| `npm test`              | 128 backend tests (Vitest + Supertest)            |
+| `npm test`              | Backend (Vitest + Supertest) and frontend tests   |
+| `npm run test:backend`  | Backend tests only                                |
+| `npm run test:frontend` | Frontend tests only                               |
 | `npm run lint`          | ESLint (backend) + Oxlint (frontend)              |
 | `npm run format`        | Prettier over both packages                       |
 | `npm run format:check`  | Same, without writing — this is what CI runs      |
@@ -173,6 +178,7 @@ All routes are prefixed `/api`. Authenticated routes take
 | `POST`   | `/api/auth/forgot`           | –      | Emails a reset link                |
 | `POST`   | `/api/auth/reset`            | –      | Consumes a reset token             |
 | `POST`   | `/api/auth/verify`           | –      | Consumes an email verification link |
+| `POST`   | `/api/auth/resend-verification` | required | Sends a fresh verification email |
 | `GET`    | `/api/schemes`               | –      | All schemes                        |
 | `POST`   | `/api/check`                 | optional | Matches + near-matches            |
 | `GET`    | `/api/check/history`         | required | The caller's past checks          |
@@ -194,9 +200,12 @@ shell, so a client never gets HTML where it asked for JSON.
 Push to GitHub, then on Render pick **New → Blueprint** and connect the repo.
 `render.yaml` fills in the rest:
 
-- Build: `npm ci --prefix backend && npm ci --prefix frontend && npm run build`
+- Build: `npm ci --prefix frontend --include=dev && npm ci --prefix backend --include=dev && npm run build`
 - Start: `npm start`
 - You supply `DATABASE_URL`; `JWT_SECRET` is generated for you
+- `APP_URL` is pre-set to the service URL so reset/verify emails link to the
+  right place. Set `RESEND_API_KEY` (and ideally a verified `MAIL_FROM`) to
+  actually deliver email, and `ADMIN_EMAILS` if you want the admin dashboard.
 
 Render's free tier sleeps after ~15 minutes idle and takes ~30s to wake. Upgrade
 to remove that.
@@ -221,14 +230,14 @@ The same image works on Railway, Fly.io or any Docker host.
 ## Tests and CI
 
 ```bash
-npm test            # 128 tests across 8 files
+npm test            # backend + frontend test suites
 npm run lint
 npm run format:check
 ```
 
 `.github/workflows/ci.yml` runs four jobs on every push and pull request to
-`main`: **lint & format**, **backend tests**, **frontend build**, and **docker
-build & smoke test**.
+`main`: **lint & format**, **backend tests**, **frontend tests & build**, and
+**docker build & smoke test**.
 
 The first three need no configuration — tests stub the database, so no
 `DATABASE_URL` is required. The docker job is the one that would otherwise rot
@@ -288,9 +297,9 @@ longer describe the Console.
 
 **Copy the whole string, do not retype it.** Only the password segment changes —
 the host and database name stay the same — but retyping a generated password can
-drop a character that the URL had encoded. Keep `?sslmode=require` at the end:
-`db.js` disables TLS when it sees `sslmode=disable` or a `localhost` host, and
-Neon needs TLS.
+drop a character that the URL had encoded. You can keep `?sslmode=require` at the
+end: `db.js` chooses TLS itself (off for `sslmode=disable` or a `localhost` host,
+on otherwise) and strips the parameter before connecting, so it is harmless.
 
 The reset is branch-scoped to whichever branch the **BRANCH** picker is showing.
 Child branches keep the old password until you reset the role on each of them.

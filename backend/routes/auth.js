@@ -3,24 +3,19 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const rateLimit = require("express-rate-limit");
 const pool = require("../db");
+const { requireAuth } = require("../middleware/auth");
+const { makeLimiter } = require("../middleware/rateLimit");
 const { sendPasswordReset, sendVerifyEmail } = require("../mailer");
 
 const router = express.Router();
 
-// Slow down repeated login/register attempts (basic brute-force protection)
-// Disabled when RATE_LIMIT_DISABLED=1 so integration tests don't trip it.
-const authLimiter =
-  process.env.RATE_LIMIT_DISABLED === "1"
-    ? (req, res, next) => next()
-    : rateLimit({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        limit: 10,
-        standardHeaders: true,
-        legacyHeaders: false,
-        message: { error: "Too many attempts. Please wait 15 minutes and try again." },
-      });
+// Slow down repeated login/register attempts (basic brute-force protection).
+const authLimiter = makeLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 10,
+  message: "Too many attempts. Please wait 15 minutes and try again.",
+});
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .split(",")
@@ -63,8 +58,8 @@ router.post("/register", authLimiter, async (req, res) => {
   if (typeof email !== "string" || email.length > 255) {
     return res.status(400).json({ error: "Invalid email address." });
   }
-  if (typeof password !== "string" || password.length < 6 || password.length > 128) {
-    return res.status(400).json({ error: "Password must be 6-128 characters." });
+  if (typeof password !== "string" || password.length < 8 || password.length > 128) {
+    return res.status(400).json({ error: "Password must be 8-128 characters." });
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: "Please enter a valid email address." });
@@ -89,9 +84,16 @@ router.post("/register", authLimiter, async (req, res) => {
     const vtoken = await createToken(user.id, "email_verify");
     sendVerifyEmail(user.email, vtoken).catch((e) => console.error("Verify email failed:", e.message));
 
-    res
-      .status(201)
-      .json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    res.status(201).json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        email_verified: user.email_verified,
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong while creating your account." });
@@ -134,7 +136,16 @@ router.post("/login", authLimiter, async (req, res) => {
     }
 
     const token = signToken(user);
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        email_verified: user.email_verified,
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong while logging in." });
@@ -166,8 +177,8 @@ router.post("/reset", authLimiter, async (req, res) => {
   const { token, password } = req.body;
   if (!token || !validTokenPair(token))
     return res.status(400).json({ error: "Invalid or expired reset link." });
-  if (!password || typeof password !== "string" || password.length < 6 || password.length > 128) {
-    return res.status(400).json({ error: "Password must be 6-128 characters." });
+  if (!password || typeof password !== "string" || password.length < 8 || password.length > 128) {
+    return res.status(400).json({ error: "Password must be 8-128 characters." });
   }
 
   try {
@@ -221,6 +232,27 @@ router.post("/verify", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong while verifying your email." });
+  }
+});
+
+// POST /api/auth/resend-verification - send a fresh verification link
+router.post("/resend-verification", authLimiter, requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query("SELECT email, email_verified FROM users WHERE id = $1", [req.userId]);
+    const user = result.rows[0];
+    if (!user) {
+      return res.status(401).json({ error: "Login required. Please sign in first." });
+    }
+    if (user.email_verified) {
+      return res.json({ ok: true, alreadyVerified: true });
+    }
+
+    const token = await createToken(req.userId, "email_verify");
+    await sendVerifyEmail(user.email, token);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not send the verification email." });
   }
 });
 

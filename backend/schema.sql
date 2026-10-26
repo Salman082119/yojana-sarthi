@@ -65,3 +65,14 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE schemes ADD COLUMN IF NOT EXISTS documents TEXT[] NOT NULL DEFAULT '{}';
 ALTER TABLE schemes ADD COLUMN IF NOT EXISTS steps JSONB NOT NULL DEFAULT '[]';
+
+-- Query-path indexes. `applications(user_id, scheme_id)` is already covered by
+-- the UNIQUE constraint, so it needs no separate index.
+CREATE INDEX IF NOT EXISTS idx_eligibility_checks_user_created
+  ON eligibility_checks (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_schemes_order
+  ON schemes (level, category, name);
+CREATE INDEX IF NOT EXISTS idx_tokens_lookup
+  ON tokens (purpose, token_hash);
+CREATE INDEX IF NOT EXISTS idx_tokens_expiry
+  ON tokens (expires_at);

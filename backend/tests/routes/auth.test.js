@@ -23,6 +23,7 @@ import request from "supertest";
 import express from "express";
 import bcrypt from "bcryptjs";
 const authRouter = require("../../routes/auth.js");
+const jwt = require("jsonwebtoken");
 
 function makeApp() {
   const app = express();
@@ -32,6 +33,7 @@ function makeApp() {
 }
 
 const hashPassword = (pw) => bcrypt.hashSync(pw, 4);
+const authHeader = (userId) => `Bearer ${jwt.sign({ userId }, process.env.JWT_SECRET)}`;
 
 describe("POST /api/auth/register", () => {
   it("registers a new user successfully", async () => {
@@ -69,6 +71,14 @@ describe("POST /api/auth/register", () => {
       .post("/api/auth/register")
       .send({ name: "Test", email: "test@example.com", password: "123" });
     expect(res.status).toBe(400);
+  });
+
+  it("requires at least 8 password characters", async () => {
+    const res = await request(makeApp())
+      .post("/api/auth/register")
+      .send({ name: "Test", email: "test@example.com", password: "1234567" });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("8-128");
   });
 
   it("rejects invalid email format", async () => {
@@ -213,5 +223,34 @@ describe("POST /api/auth/verify", () => {
       .send({ token: "c".repeat(64) });
     expect(res.status).toBe(200);
     expect(mockQuery.mock.calls[1][0]).toContain("UPDATE users SET email_verified");
+  });
+});
+
+describe("POST /api/auth/resend-verification", () => {
+  it("requires authentication", async () => {
+    const res = await request(makeApp()).post("/api/auth/resend-verification");
+    expect(res.status).toBe(401);
+  });
+
+  it("sends a new link for an unverified user", async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ email: "new@example.com", email_verified: false }] })
+      .mockResolvedValueOnce({ rows: [{ id: 12 }] });
+    const res = await request(makeApp())
+      .post("/api/auth/resend-verification")
+      .set("Authorization", authHeader(1));
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(mockQuery.mock.calls[1][0]).toContain("INSERT INTO tokens");
+  });
+
+  it("does not resend when the email is already verified", async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ email: "ok@example.com", email_verified: true }] });
+    const res = await request(makeApp())
+      .post("/api/auth/resend-verification")
+      .set("Authorization", authHeader(1));
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true, alreadyVerified: true });
+    expect(mockQuery).toHaveBeenCalledTimes(1);
   });
 });
