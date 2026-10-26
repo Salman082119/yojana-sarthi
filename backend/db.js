@@ -16,8 +16,22 @@ const sslDisabled =
   connectionString.includes("localhost") ||
   connectionString.includes("127.0.0.1");
 
+// TLS is configured explicitly below, so the sslmode parameter in the URL is
+// redundant. Stripping it also silences pg's future-behaviour warning about
+// sslmode aliases (pg v9 will adopt libpq semantics).
+function withoutSslMode(url) {
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.delete("sslmode");
+    parsed.searchParams.delete("uselibpqcompat");
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 const pool = new Pool({
-  connectionString,
+  connectionString: withoutSslMode(connectionString),
   ssl: sslDisabled ? false : { rejectUnauthorized: false }, // needed for most free Postgres hosts (Neon, Render, etc.)
 });
 
